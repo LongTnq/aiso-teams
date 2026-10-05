@@ -21,7 +21,7 @@ public sealed class GetOverdueOrdersFunction : IFunction
     public string Description =>
         "Get sales orders that have exceeded their scheduled delivery date from SAP. " +
         "Trigger when user asks about late orders, overdue deliveries, delayed shipments, " +
-        "or orders past due date. Returns orders sorted most-overdue first.";
+        "or orders past due date. Returns orders sorted most-overdue first. (Keywords: đơn quá hạn, đơn trễ hạn, giao trễ, overdue orders)";
 
     public string ParametersJsonSchema => """
         {

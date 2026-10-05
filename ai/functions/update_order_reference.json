@@ -1,6 +1,6 @@
 {
   "name": "UpdateOrderReference",
-  "description": "Update the customer PO reference on a sales order. Requires order_id and new_reference.",
+  "description": "Update the customer PO reference on a sales order. Requires order_id and new_reference. (Keywords: cập nhật reference, cập nhật PO, sửa PO, update reference, update PO)",
   "parameters": {
     "type": "object",
     "properties": {
@@ -13,7 +13,10 @@
         "description": "New PO reference number."
       }
     },
-    "required": ["order_id", "new_reference"],
+    "required": [
+      "order_id",
+      "new_reference"
+    ],
     "additionalProperties": false
   }
 }

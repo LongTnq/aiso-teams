@@ -1,24 +1,44 @@
 {
   "name": "GetOverdueOrders",
-  "description": "Get overdue SAP sales orders. All params optional.",
+  "description": "Get overdue SAP sales orders. All params optional. (Keywords: đơn quá hạn, đơn trễ hạn, giao trễ, overdue orders)",
   "parameters": {
     "type": "object",
     "properties": {
       "customerIdOrName": {
-        "type": ["string", "null"],
+        "type": [
+          "string",
+          "null"
+        ],
         "description": "Customer ID or partial name."
       },
       "salesOrg": {
-        "type": ["string", "null"],
-        "enum": ["TV01", "FU24", "UE00", "UW00", "DN00", "DS00", null],
+        "type": [
+          "string",
+          "null"
+        ],
+        "enum": [
+          "TV01",
+          "FU24",
+          "UE00",
+          "UW00",
+          "DN00",
+          "DS00",
+          null
+        ],
         "description": "Sales org."
       },
       "daysPastDue": {
-        "type": ["integer", "null"],
+        "type": [
+          "integer",
+          "null"
+        ],
         "description": "Minimum days past due."
       },
       "top": {
-        "type": ["integer", "null"],
+        "type": [
+          "integer",
+          "null"
+        ],
         "description": "Max records to return."
       }
     },

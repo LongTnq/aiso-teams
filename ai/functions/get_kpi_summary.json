@@ -1,27 +1,52 @@
 {
   "name": "GetKpiSummary",
-  "description": "Get aggregated KPI dashboard overview from SAP. All params optional.",
+  "description": "Get aggregated KPI dashboard overview from SAP. All params optional. (Keywords: tổng hợp kpi, tóm tắt kpi, doanh thu tổng, kpi summary, dashboard)",
   "parameters": {
     "type": "object",
     "properties": {
       "fromDate": {
-        "type": ["string", "null"],
+        "type": [
+          "string",
+          "null"
+        ],
         "format": "date",
         "description": "Start date YYYY-MM-DD."
       },
       "toDate": {
-        "type": ["string", "null"],
+        "type": [
+          "string",
+          "null"
+        ],
         "format": "date",
         "description": "End date YYYY-MM-DD."
       },
       "salesOrg": {
-        "type": ["string", "null"],
-        "enum": ["TV01", "FU24", "UE00", "UW00", "DN00", "DS00", null],
+        "type": [
+          "string",
+          "null"
+        ],
+        "enum": [
+          "TV01",
+          "FU24",
+          "UE00",
+          "UW00",
+          "DN00",
+          "DS00",
+          null
+        ],
         "description": "Sales org."
       },
       "granularity": {
-        "type": ["string", "null"],
-        "enum": ["daily", "weekly", "monthly", null],
+        "type": [
+          "string",
+          "null"
+        ],
+        "enum": [
+          "daily",
+          "weekly",
+          "monthly",
+          null
+        ],
         "description": "Granularity for revenue series breakdown."
       }
     },

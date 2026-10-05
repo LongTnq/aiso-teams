@@ -24,7 +24,7 @@ public sealed class ForceCancelFunction : IFunction
 
     public string Description =>
         "Admin-only: prepare force cancel for a sales order (bypasses ownership). " +
-        "Returns a confirmation card — does not cancel until the user confirms with a reason.";
+        "Returns a confirmation card — does not cancel until the user confirms with a reason. (Keywords: ép hủy, hủy bắt buộc, hủy admin, force cancel)";
 
     public string ParametersJsonSchema => """
         {

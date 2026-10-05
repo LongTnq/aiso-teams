@@ -31,7 +31,7 @@ public sealed class EditOrderFunction : IFunction
 
     public string Description =>
         "Edit an existing sales order in SAP (PO reference, requested delivery date, and one line add/update/delete). " +
-        "Returns a confirmation form — does not change SAP until the user confirms.";
+        "Returns a confirmation form — does not change SAP until the user confirms. (Keywords: sửa đơn, cập nhật đơn, chỉnh sửa đơn hàng, edit order, update order)";
 
     public string ParametersJsonSchema => """
         {

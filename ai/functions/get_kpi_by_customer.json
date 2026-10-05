@@ -1,30 +1,53 @@
 {
   "name": "GetKpiByCustomer",
-  "description": "Get KPI metrics per customer from SAP: revenue, order count, average order value, fulfillment rate. Trigger when user asks about customer performance, top customers by revenue, client-level sales analysis, or specific customer KPI. All params optional — call immediately on intent match.",
+  "description": "Get KPI metrics per customer from SAP: revenue, order count, average order value, fulfillment rate. Trigger when user asks about customer performance, top customers by revenue, client-level sales analysis, or specific customer KPI. All params optional — call immediately on intent match. (Keywords: kpi khách hàng, kpi theo khách hàng, doanh thu khách hàng, kpi by customer)",
   "parameters": {
     "type": "object",
     "properties": {
       "customerIdOrName": {
-        "type": ["string", "null"],
+        "type": [
+          "string",
+          "null"
+        ],
         "description": "Customer ID or partial name to filter to a specific customer (e.g. 'CUST-3001', 'Philly Bikes'). Null to return all customers ranked by revenue."
       },
       "fromDate": {
-        "type": ["string", "null"],
+        "type": [
+          "string",
+          "null"
+        ],
         "format": "date",
         "description": "Start date YYYY-MM-DD. Null if not specified."
       },
       "toDate": {
-        "type": ["string", "null"],
+        "type": [
+          "string",
+          "null"
+        ],
         "format": "date",
         "description": "End date YYYY-MM-DD. Null if not specified."
       },
       "salesOrg": {
-        "type": ["string", "null"],
-        "enum": ["TV01", "FU24", "UE00", "UW00", "DN00", "DS00", null],
+        "type": [
+          "string",
+          "null"
+        ],
+        "enum": [
+          "TV01",
+          "FU24",
+          "UE00",
+          "UW00",
+          "DN00",
+          "DS00",
+          null
+        ],
         "description": "Sales org filter. Null if not specified."
       },
       "top": {
-        "type": ["integer", "null"],
+        "type": [
+          "integer",
+          "null"
+        ],
         "minimum": 1,
         "maximum": 50,
         "description": "Return top N customers by revenue (1–50). Null if not specified."

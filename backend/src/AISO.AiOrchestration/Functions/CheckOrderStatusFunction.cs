@@ -26,7 +26,7 @@ public sealed class CheckOrderStatusFunction : IFunction
     public string Name => "CheckOrderStatus";
 
     public string Description =>
-        "Check the status and details of a specific Sales Order by its order number.";
+        "Check the status and details of a specific Sales Order by its order number. (Keywords: kiểm tra trạng thái đơn, tình trạng đơn hàng, tra cứu đơn, check status, check order status)";
 
     public string ParametersJsonSchema => """
         {

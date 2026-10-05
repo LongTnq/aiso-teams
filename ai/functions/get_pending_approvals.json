@@ -1,6 +1,6 @@
 {
   "name": "GetPendingApprovals",
-  "description": "List PENDING release-approval requests in the manager inbox (maker-checker). Use ONLY when the user asks for pending approvals, approval inbox, orders awaiting approval, or waiting for manager approval. Do NOT use GetSalesOrders for these phrases.",
+  "description": "List PENDING release-approval requests in the manager inbox (maker-checker). Use ONLY when the user asks for pending approvals, approval inbox, orders awaiting approval, or waiting for manager approval. Do NOT use GetSalesOrders for these phrases. (Keywords: đơn chờ duyệt, danh sách chờ duyệt, pending approvals)",
   "parameters": {
     "type": "object",
     "properties": {},

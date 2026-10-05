@@ -22,7 +22,7 @@ public sealed class GetKpiByCustomerFunction : IFunction
     public string Description =>
         "Get KPI breakdown per customer from SAP: revenue, order count, fulfillment rate. " +
         "Trigger when user asks about top customers, customer revenue, or customer-level performance. " +
-        "Returns customers ranked by revenue descending.";
+        "Returns customers ranked by revenue descending. (Keywords: kpi khách hàng, kpi theo khách hàng, doanh thu khách hàng, kpi by customer)";
 
     public string ParametersJsonSchema => """
         {

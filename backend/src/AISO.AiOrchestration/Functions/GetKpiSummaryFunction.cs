@@ -24,7 +24,7 @@ public sealed class GetKpiSummaryFunction : IFunction
     public string Description =>
         "Get aggregated KPI dashboard from SAP: total revenue, order count, fulfillment rate, " +
         "cancellation rate. Trigger when user asks about overall performance, KPI overview, " +
-        "revenue totals, or sales dashboard. All params optional.";
+        "revenue totals, or sales dashboard. All params optional. (Keywords: tổng hợp kpi, tóm tắt kpi, doanh thu tổng, kpi summary, dashboard)";
 
     public string ParametersJsonSchema => """
         {

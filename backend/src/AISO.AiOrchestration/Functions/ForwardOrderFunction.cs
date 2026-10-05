@@ -33,7 +33,7 @@ public sealed class ForwardOrderFunction : IFunction
         "Prepare forwarding a sales order you own to another SAP user. " +
         "Validates the order and returns a confirmation step with recipient picker — " +
         "does not transfer ownership until the user confirms. " +
-        "Call with order_id even when the recipient is unknown; pass forward_to_user when stated.";
+        "Call with order_id even when the recipient is unknown; pass forward_to_user when stated. (Keywords: chuyển tiếp đơn, giao đơn cho, nhờ xử lý, chuyển cho, forward order)";
 
     public string ParametersJsonSchema => """
         {

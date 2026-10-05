@@ -10,7 +10,7 @@ namespace AISO.AiOrchestration.Functions;
 public class RevokeDelegationFunction : IFunction
 {
     public string Name => "RevokeDelegation";
-    public string Description => "Revokes an existing approval delegation in SAP and local database.";
+    public string Description => "Revokes an existing approval delegation in SAP and local database. (Keywords: thu hồi ủy quyền, hủy ủy quyền, revoke delegation)";
 
     public string ParametersJsonSchema => """
         {

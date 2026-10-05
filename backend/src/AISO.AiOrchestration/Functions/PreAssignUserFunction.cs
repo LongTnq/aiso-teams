@@ -23,7 +23,7 @@ public sealed class PreAssignUserFunction : IFunction
     public string Description =>
         "Admin only: adds a user's Teams email to the allow-list for a specific SAP User ID. " +
         "Use this when adding a new user to the system. " +
-        "Required inputs: teams_email, sap_user_id, role, sales_org.";
+        "Required inputs: teams_email, sap_user_id, role, sales_org. (Keywords: cấp phép trước, thêm người dùng mới, pre assign, add user)";
 
     public string ParametersJsonSchema => """
         {

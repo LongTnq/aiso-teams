@@ -40,7 +40,7 @@ public sealed class MyProfileFunction : IFunction
     public string Description =>
         "Returns the current user's profile: SAP user id, display name, role, sales org, " +
         "and an order-status breakdown (Total/Open/Blocked/PartiallyDelivered/Delivered/Invoiced/Cancelled) " +
-        "plus the 5 most recent sales orders they own. Use for 'my profile' / 'hồ sơ của tôi'.";
+        "plus the 5 most recent sales orders they own. Use for 'my profile' / 'hồ sơ của tôi'. (Keywords: hồ sơ của tôi, thông tin của tôi, my profile)";
 
     public string ParametersJsonSchema => """
         {

@@ -32,7 +32,7 @@ public sealed class RequestReleaseFunction : IFunction
     public string Description =>
         "Prepare a release-approval request for a sales order (maker-checker). " +
         "Validates the order and returns a confirmation step — does not submit until the user confirms. " +
-        "A Manager must ApproveOrder after the employee confirms.";
+        "A Manager must ApproveOrder after the employee confirms. (Keywords: yêu cầu xuất đơn, yêu cầu duyệt, xin duyệt, request release, submit for approval)";
 
     public string ParametersJsonSchema => """
         {

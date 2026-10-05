@@ -27,7 +27,7 @@ public sealed class GetPendingApprovalsFunction : IFunction
     public string Name => "GetPendingApprovals";
 
     public string Description =>
-        "List sales orders waiting for release approval. Manager sees their VKORG; Admin sees all.";
+        "List sales orders waiting for release approval. Manager sees their VKORG; Admin sees all. (Keywords: đơn chờ duyệt, danh sách chờ duyệt, pending approvals)";
 
     public string ParametersJsonSchema => """
         {

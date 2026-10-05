@@ -12,7 +12,7 @@ namespace AISO.AiOrchestration.Functions;
 public class ForceDelegateApprovalFunction : IFunction
 {
     public string Name => "ForceDelegateApproval";
-    public string Description => "Emergency override: forces a delegation on behalf of another user.";
+    public string Description => "Emergency override: forces a delegation on behalf of another user. (Keywords: ép ủy quyền, bắt buộc ủy quyền, force delegate)";
 
     public string ParametersJsonSchema => """
         {

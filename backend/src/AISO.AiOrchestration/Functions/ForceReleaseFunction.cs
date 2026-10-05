@@ -24,7 +24,7 @@ public sealed class ForceReleaseFunction : IFunction
 
     public string Description =>
         "Admin-only: prepare force release for a sales order (bypasses ownership). " +
-        "Returns a confirmation card — does not release until the user confirms with a reason.";
+        "Returns a confirmation card — does not release until the user confirms with a reason. (Keywords: ép giải phóng, ép xuất đơn, force release)";
 
     public string ParametersJsonSchema => """
         {

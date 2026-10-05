@@ -37,7 +37,7 @@ public sealed class GetSalesOrdersFunction : IFunction
         "sales organization, date range, status, and ownership. " +
         "For 'my sales orders' / 'đơn của tôi' / 'đơn hàng của tôi', set ownedByMe=true " +
         "(filters OwnerSapUser to the requesting SAP user). " +
-        "For 'recent orders' / 'show open orders' / 'all open orders' without 'my', leave ownedByMe unset.";
+        "For 'recent orders' / 'show open orders' / 'all open orders' without 'my', leave ownedByMe unset. (Keywords: danh sách đơn hàng, tìm đơn hàng, đơn của tôi, my orders, sales orders, all orders)";
 
     public string ParametersJsonSchema => """
         {
