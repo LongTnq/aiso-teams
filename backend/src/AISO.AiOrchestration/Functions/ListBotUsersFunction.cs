@@ -20,7 +20,7 @@ public sealed class ListBotUsersFunction : IFunction
 
     public string Description =>
         "Admin only: list linked Teams↔SAP users with role and SalesOrg. " +
-        "Use for 'list users', 'show users', 'manage users'.";
+        "Use for 'list users', 'show users', 'manage users'. (Keywords: danh sách người dùng, bot users, list users)";
 
     public string ParametersJsonSchema => """
         {

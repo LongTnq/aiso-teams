@@ -1,6 +1,6 @@
 {
   "name": "GetSalesOrders",
-  "description": "Retrieve sales orders list from SAP based on optional filters. All params optional. For phrases like 'my sales orders', 'show my orders', 'đơn của tôi', 'xem danh sách đơn hàng của tôi' set ownedByMe=true. For 'recent orders', 'đơn hàng gần đây', 'show open orders' without 'my'/'của tôi', do NOT set ownedByMe. Do NOT use for pending approvals - use GetPendingApprovals instead.",
+  "description": "Retrieve sales orders list from SAP based on optional filters. All params optional. For phrases like 'my sales orders', 'show my orders', 'đơn của tôi', 'xem danh sách đơn hàng của tôi' set ownedByMe=true. For 'recent orders', 'đơn hàng gần đây', 'show open orders' without 'my'/'của tôi', do NOT set ownedByMe. Do NOT use for pending approvals - use GetPendingApprovals instead. (Keywords: danh sách đơn hàng, tìm đơn hàng, đơn của tôi, my orders, sales orders, all orders)",
   "parameters": {
     "type": "object",
     "properties": {

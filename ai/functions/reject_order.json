@@ -1,6 +1,6 @@
 {
   "name": "RejectOrder",
-  "description": "Reject (cancel) a sales order in SAP. Requires order_id and reason_code. Do NOT use for 'force cancel' (use ForceCancel) or 'reject approval' (use RejectApproval).",
+  "description": "Reject (cancel) a sales order in SAP. Requires order_id and reason_code. Do NOT use for 'force cancel' (use ForceCancel) or 'reject approval' (use RejectApproval). (Keywords: từ chối đơn hàng, từ chối đơn, reject order)",
   "parameters": {
     "type": "object",
     "properties": {
@@ -23,7 +23,10 @@
         "description": "Short rejection reason. PRICE_ISSUE=Price too high; OUT_OF_STOCK=Out of stock; CUSTOMER_CANCEL=Customer cancelled; WRONG_ITEM=Wrong item; DELIVERY_DATE=Delivery date issue; CREDIT_ISSUE=Credit / payment; DUPLICATE_ORDER=Duplicate order; OTHER=Other."
       }
     },
-    "required": ["order_id", "reason_code"],
+    "required": [
+      "order_id",
+      "reason_code"
+    ],
     "additionalProperties": false
   }
 }

@@ -32,7 +32,7 @@ public sealed class RejectApprovalFunction : IFunction
     public string Name => "RejectApproval";
 
     public string Description =>
-        "Reject a pending release-approval request. Manager/Admin only. Does not reject the sales order in SAP.";
+        "Reject a pending release-approval request. Manager/Admin only. Does not reject the sales order in SAP. (Keywords: từ chối duyệt, không duyệt, reject approval)";
 
     public string ParametersJsonSchema => """
         {

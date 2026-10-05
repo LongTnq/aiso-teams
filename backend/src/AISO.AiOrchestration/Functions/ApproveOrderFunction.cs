@@ -37,7 +37,7 @@ public sealed class ApproveOrderFunction : IFunction
     public string Name => "ApproveOrder";
 
     public string Description =>
-        "Approve a pending release request and release the sales order in SAP. Manager/Admin only.";
+        "Approve a pending release request and release the sales order in SAP. Manager/Admin only. (Keywords: duyệt đơn, phê duyệt đơn, approve order, approve pending)";
 
     public string ParametersJsonSchema => """
         {

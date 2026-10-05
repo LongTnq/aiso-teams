@@ -1,6 +1,6 @@
 {
   "name": "ForceDelegateApproval",
-  "description": "Emergency override: forces a delegation on behalf of another user. Requires Admin role.",
+  "description": "Emergency override: forces a delegation on behalf of another user. Requires Admin role. (Keywords: ép ủy quyền, bắt buộc ủy quyền, force delegate)",
   "parameters": {
     "type": "object",
     "properties": {

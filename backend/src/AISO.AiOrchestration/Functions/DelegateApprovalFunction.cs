@@ -11,7 +11,7 @@ namespace AISO.AiOrchestration.Functions;
 public class DelegateApprovalFunction : IFunction
 {
     public string Name => "DelegateApproval";
-    public string Description => "Delegates the user's approval authority to another employee in SAP and local database.";
+    public string Description => "Delegates the user's approval authority to another employee in SAP and local database. (Keywords: ủy quyền duyệt, ủy quyền, giao quyền duyệt, delegate, delegate approval)";
 
     public string ParametersJsonSchema => """
         {

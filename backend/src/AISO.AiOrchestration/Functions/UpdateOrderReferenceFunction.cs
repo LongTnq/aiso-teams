@@ -24,7 +24,7 @@ public sealed class UpdateOrderReferenceFunction : IFunction
 
     public string Description =>
         "Update the reference number (like a Customer PO) on an existing sales order in SAP. " +
-        "Returns a confirmation form — does not update until the user confirms.";
+        "Returns a confirmation form — does not update until the user confirms. (Keywords: cập nhật reference, cập nhật PO, sửa PO, update reference, update PO)";
 
     public string ParametersJsonSchema => """
         {

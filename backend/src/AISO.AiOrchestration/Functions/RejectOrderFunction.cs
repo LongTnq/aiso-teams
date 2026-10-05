@@ -30,7 +30,7 @@ public sealed class RejectOrderFunction : IFunction
     public string Name => "RejectOrder";
 
     public string Description =>
-        "Reject or cancel a sales order in the SAP ERP system with a short reason code.";
+        "Reject or cancel a sales order in the SAP ERP system with a short reason code. (Keywords: từ chối đơn hàng, từ chối đơn, reject order)";
 
     public string ParametersJsonSchema
     {

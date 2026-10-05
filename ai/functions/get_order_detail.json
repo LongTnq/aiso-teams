@@ -1,6 +1,6 @@
 {
   "name": "GetOrderDetail",
-  "description": "Get full details of a specific SAP Sales Order. Requires explicit order_id.",
+  "description": "Get full details of a specific SAP Sales Order. Requires explicit order_id. (Keywords: chi tiết đơn hàng, xem chi tiết đơn, order detail, get order detail)",
   "parameters": {
     "type": "object",
     "properties": {
@@ -9,7 +9,9 @@
         "description": "SAP Sales Order number."
       }
     },
-    "required": ["order_id"],
+    "required": [
+      "order_id"
+    ],
     "additionalProperties": false
   }
 }

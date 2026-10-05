@@ -32,7 +32,7 @@ public sealed class CancelOrderFunction : IFunction
 
     public string Description =>
         "Cancel a sales order in SAP. Employee may cancel their own order; " +
-        "Manager/Admin may cancel others. Returns a confirmation card — does not cancel until confirmed.";
+        "Manager/Admin may cancel others. Returns a confirmation card — does not cancel until confirmed. (Keywords: hủy đơn, cancel order)";
 
     public string ParametersJsonSchema => """
         {

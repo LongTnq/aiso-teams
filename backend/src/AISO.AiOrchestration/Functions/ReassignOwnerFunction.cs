@@ -19,7 +19,7 @@ public sealed class ReassignOwnerFunction : IFunction
     public string Name => "ReassignOwner";
 
     public string Description =>
-        "Reassign sales order ownership to another SAP user. Manager or Admin only.";
+        "Reassign sales order ownership to another SAP user. Manager or Admin only. (Keywords: đổi người phụ trách, đổi owner, reassign owner)";
 
     public string ParametersJsonSchema => """
         {

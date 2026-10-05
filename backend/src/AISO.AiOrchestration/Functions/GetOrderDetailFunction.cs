@@ -23,7 +23,7 @@ public sealed class GetOrderDetailFunction : IFunction
     public string Name => "GetOrderDetail";
 
     public string Description =>
-        "Get full details of a specific SAP Sales Order. Requires explicit order_id.";
+        "Get full details of a specific SAP Sales Order. Requires explicit order_id. (Keywords: chi tiết đơn hàng, xem chi tiết đơn, order detail, get order detail)";
 
     public string ParametersJsonSchema => """
         {

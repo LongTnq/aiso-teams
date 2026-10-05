@@ -1,11 +1,14 @@
 {
   "name": "ViewAuditLog",
-  "description": "Show recent bot audit log entries. Admin only. Use when an admin asks for audit log, activity log, or who did what.",
+  "description": "Show recent bot audit log entries. Admin only. Use when an admin asks for audit log, activity log, or who did what. (Keywords: xem nhật ký, nhật ký hệ thống, audit log, view audit log)",
   "parameters": {
     "type": "object",
     "properties": {
       "limit": {
-        "type": ["integer", "null"],
+        "type": [
+          "integer",
+          "null"
+        ],
         "description": "Number of recent entries (default 20, max 100)."
       }
     },

@@ -22,7 +22,7 @@ public sealed class GetKpiByProductFunction : IFunction
     public string Description =>
         "Get KPI breakdown per product/material from SAP: revenue, quantity sold, order count. " +
         "Trigger when user asks about top products, best-selling materials, or product-level revenue. " +
-        "Returns products ranked by revenue descending.";
+        "Returns products ranked by revenue descending. (Keywords: kpi sản phẩm, kpi theo sản phẩm, bán chạy, kpi by product)";
 
     public string ParametersJsonSchema => """
         {

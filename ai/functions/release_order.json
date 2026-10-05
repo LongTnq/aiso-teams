@@ -1,6 +1,6 @@
 {
   "name": "ReleaseOrder",
-  "description": "Directly release a sales order in SAP. Do NOT use for phrases like 'request release', 'submit for approval', or 'yêu cầu duyệt' — those must call RequestRelease. Prefer ApproveOrder when a pending release request exists.",
+  "description": "Directly release a sales order in SAP. Do NOT use for phrases like 'request release', 'submit for approval', or 'yêu cầu duyệt' — those must call RequestRelease. Prefer ApproveOrder when a pending release request exists. (Keywords: xuất đơn, giải phóng đơn, release order)",
   "parameters": {
     "type": "object",
     "properties": {
@@ -9,11 +9,16 @@
         "description": "Sales order number."
       },
       "comment": {
-        "type": ["string", "null"],
+        "type": [
+          "string",
+          "null"
+        ],
         "description": "Optional comment or note."
       }
     },
-    "required": ["order_id"],
+    "required": [
+      "order_id"
+    ],
     "additionalProperties": false
   }
 }

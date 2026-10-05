@@ -17,7 +17,7 @@ public class ListDelegationsFunction : IFunction
 
     public string Name => "ListDelegations";
 
-    public string Description => "List all currently active delegations. Use this when the user asks to see who is delegated, who they delegated to, or who has approval rights.";
+    public string Description => "List all currently active delegations. Use this when the user asks to see who is delegated, who they delegated to, or who has approval rights. (Keywords: danh sách ủy quyền, xem ủy quyền, list delegations)";
 
     public string ParametersJsonSchema => """
         {

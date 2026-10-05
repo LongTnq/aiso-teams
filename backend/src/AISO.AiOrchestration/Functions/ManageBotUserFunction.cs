@@ -22,7 +22,7 @@ public sealed class ManageBotUserFunction : IFunction
 
     public string Description =>
         "Admin only: open the manage-user card to change Role and/or SalesOrg for a linked SAP user. " +
-        "Use for 'manage user DEV-249', 'set role', 'set sales org'. Does not save until the Admin confirms on the card.";
+        "Use for 'manage user DEV-249', 'set role', 'set sales org'. Does not save until the Admin confirms on the card. (Keywords: quản lý người dùng, sửa thông tin người dùng, đổi role, manage user)";
 
     public string ParametersJsonSchema => """
         {

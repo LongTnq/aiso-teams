@@ -31,7 +31,7 @@ public sealed class CreateOrderFunction : IFunction
     public string Name => "CreateOrder";
 
     public string Description =>
-        "Opens the Create Sales Order UI form. ALWAYS call this function IMMEDIATELY when the user asks to create an order. DO NOT ask the user for any parameters (customer, material, etc.), just call this function with an empty object and the UI will handle it.";
+        "Opens the Create Sales Order UI form. ALWAYS call this function IMMEDIATELY when the user asks to create an order. DO NOT ask the user for any parameters (customer, material, etc.), just call this function with an empty object and the UI will handle it. (Keywords: tạo đơn hàng, tạo đơn bán hàng, lập SO, lập đơn hàng, create order, create sales order)";
 
     public string ParametersJsonSchema => """
         {

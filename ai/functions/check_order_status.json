@@ -1,6 +1,6 @@
 {
   "name": "CheckOrderStatus",
-  "description": "Kiểm tra trạng thái và thông tin cơ bản của một đơn hàng cụ thể từ hệ thống SAP. Kích hoạt khi người dùng muốn tra cứu trạng thái, tình trạng xử lý, hoặc thông tin cơ bản của một đơn hàng theo mã ORD. Bắt buộc phải có mã đơn hàng do người dùng cung cấp — tuyệt đối không tự suy diễn. / Check the status and basic information of a specific Sales Order by its order number from SAP. Requires an explicit order_id from the user — never infer.",
+  "description": "Kiểm tra trạng thái và thông tin cơ bản của một đơn hàng cụ thể từ hệ thống SAP. Kích hoạt khi người dùng muốn tra cứu trạng thái, tình trạng xử lý, hoặc thông tin cơ bản của một đơn hàng theo mã ORD. Bắt buộc phải có mã đơn hàng do người dùng cung cấp — tuyệt đối không tự suy diễn. / Check the status and basic information of a specific Sales Order by its order number from SAP. Requires an explicit order_id from the user — never infer. (Keywords: kiểm tra trạng thái đơn, tình trạng đơn hàng, tra cứu đơn, check status, check order status)",
   "parameters": {
     "type": "object",
     "properties": {
@@ -9,7 +9,9 @@
         "description": "Mã định danh duy nhất của đơn hàng trong hệ thống SAP (ví dụ: '5', '8' hoặc '0000005001'). Phải do người dùng cung cấp rõ ràng trong tin nhắn. / The unique Sales Order number in SAP (e.g. '5', '8' or '0000005001'). Must be explicitly stated by the user."
       }
     },
-    "required": ["order_id"],
+    "required": [
+      "order_id"
+    ],
     "additionalProperties": false
   }
 }

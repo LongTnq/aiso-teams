@@ -19,7 +19,7 @@ public sealed class ViewAuditLogFunction : IFunction
     public string Name => "ViewAuditLog";
 
     public string Description =>
-        "Show the most recent bot audit log entries. Admin only.";
+        "Show the most recent bot audit log entries. Admin only. (Keywords: xem nhật ký, nhật ký hệ thống, audit log, view audit log)";
 
     public string ParametersJsonSchema => """
         {

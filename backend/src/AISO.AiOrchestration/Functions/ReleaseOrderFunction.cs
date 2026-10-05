@@ -24,7 +24,7 @@ public sealed class ReleaseOrderFunction : IFunction
     public string Name => "ReleaseOrder";
 
     public string Description =>
-        "Approve and release a pending sales order in the SAP ERP system.";
+        "Approve and release a pending sales order in the SAP ERP system. (Keywords: xuất đơn, giải phóng đơn, release order)";
 
     public string ParametersJsonSchema => """
         {

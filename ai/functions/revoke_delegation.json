@@ -1,6 +1,6 @@
 {
   "name": "RevokeDelegation",
-  "description": "Revokes an existing approval delegation in SAP and local database.",
+  "description": "Revokes an existing approval delegation in SAP and local database. (Keywords: thu hồi ủy quyền, hủy ủy quyền, revoke delegation)",
   "parameters": {
     "type": "object",
     "properties": {

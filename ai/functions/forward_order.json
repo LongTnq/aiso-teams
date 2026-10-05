@@ -1,6 +1,6 @@
 {
   "name": "ForwardOrder",
-  "description": "Prepare forwarding a sales order to another user. Bot shows a confirm card with recipient picker; ownership transfers only after the user confirms. Call when the user wants to hand over, transfer, reassign, forward, or delegate an order. Call with order_id even if the recipient is not stated. When a recipient is stated, pass forward_to_user (include honorifics as-is).",
+  "description": "Prepare forwarding a sales order to another user. Bot shows a confirm card with recipient picker; ownership transfers only after the user confirms. Call when the user wants to hand over, transfer, reassign, forward, or delegate an order. Call with order_id even if the recipient is not stated. When a recipient is stated, pass forward_to_user (include honorifics as-is). (Keywords: chuyển tiếp đơn, giao đơn cho, nhờ xử lý, chuyển cho, forward order)",
   "parameters": {
     "type": "object",
     "properties": {
@@ -9,11 +9,16 @@
         "description": "The unique sales order identifier in SAP (e.g., '5', '8' or '0000005001') to be forwarded. Must be explicitly stated by the user."
       },
       "forward_to_user": {
-        "type": ["string", "null"],
+        "type": [
+          "string",
+          "null"
+        ],
         "description": "Optional suggested recipient: SAP id, name, or email. Used to pre-select on the confirm card when it matches a linked user. Null/omit if unknown — bot shows the picker."
       }
     },
-    "required": ["order_id"],
+    "required": [
+      "order_id"
+    ],
     "additionalProperties": false
   }
 }

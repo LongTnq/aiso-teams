@@ -1,6 +1,6 @@
 {
   "name": "RejectApproval",
-  "description": "Reject a pending release-approval request (does not reject the sales order itself). Manager or Admin only.",
+  "description": "Reject a pending release-approval request (does not reject the sales order itself). Manager or Admin only. (Keywords: từ chối duyệt, không duyệt, reject approval)",
   "parameters": {
     "type": "object",
     "properties": {
@@ -9,11 +9,16 @@
         "description": "Sales order number."
       },
       "comment": {
-        "type": ["string", "null"],
+        "type": [
+          "string",
+          "null"
+        ],
         "description": "Reason for rejecting the approval request."
       }
     },
-    "required": ["order_id"],
+    "required": [
+      "order_id"
+    ],
     "additionalProperties": false
   }
 }
