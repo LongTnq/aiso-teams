@@ -78,7 +78,7 @@
                 {
                   "type": "Input.ChoiceSet",
                   "id": "docType",
-                  "label": "Order Type *",
+                  "label": "Order Type",
                   "style": "compact",
                   "isRequired": true,
                   "errorMessage": "Order type is required",
@@ -100,7 +100,7 @@
                 {
                   "type": "Input.Text",
                   "id": "currency",
-                  "label": "Currency",
+                  "label": "Currency *",
                   "value": "${currency}"
                 }
               ]
@@ -118,7 +118,7 @@
                 {
                   "type": "Input.Text",
                   "id": "purchaseOrderRef",
-                  "label": "Customer PO Number",
+                  "label": "Customer PO Number *",
                   "placeholder": "Optional",
                   "value": "${purchaseOrderRef}"
                 }
@@ -131,7 +131,7 @@
                 {
                   "type": "Input.Date",
                   "id": "requestedDeliveryDate",
-                  "label": "Requested Delivery",
+                  "label": "Requested Delivery *",
                   "value": "${requestedDeliveryDate}"
                 }
               ]
@@ -161,7 +161,7 @@
         {
           "type": "Input.Text",
           "id": "shipToParty",
-          "label": "Ship-to Party Customer Number",
+          "label": "Ship-to Party Customer Number *",
           "placeholder": "Optional \u2014 leave empty to use customer default",
           "value": "${shipToParty}",
           "isVisible": "${hasShipToParty == 'true'}"

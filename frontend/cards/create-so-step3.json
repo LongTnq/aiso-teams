@@ -10,7 +10,7 @@
       "items": [
         {
           "type": "TextBlock",
-          "text": "Create sales order (Step 3 of 4) — Line Items",
+          "text": "Create sales order (Step 3 of 4) \u00e2\u20ac\u201d Line Items",
           "weight": "Bolder",
           "size": "Medium",
           "color": "Accent",
@@ -62,7 +62,7 @@
     },
     {
       "type": "TextBlock",
-      "text": "Line items — fill at least one row before continuing",
+      "text": "Line items \u00e2\u20ac\u201d fill at least one row before continuing",
       "weight": "Bolder",
       "size": "Small",
       "spacing": "Medium",
@@ -92,7 +92,7 @@
     {
       "type": "Input.Text",
       "id": "itemsJson",
-      "label": "Items (hidden)",
+      "label": "Items (hidden) *",
       "value": "${itemsJson}",
       "isVisible": false
     },
@@ -107,7 +107,7 @@
             {
               "type": "Input.ChoiceSet",
               "id": "material1",
-              "label": "Material 1 *",
+              "label": "Material 1",
               "style": "compact",
               "isRequired": true,
               "errorMessage": "At least one material is required",
@@ -129,7 +129,7 @@
             {
               "type": "Input.Number",
               "id": "qty1",
-              "label": "Qty *",
+              "label": "Qty",
               "isRequired": true,
               "errorMessage": "Qty required",
               "min": 1,
@@ -144,7 +144,7 @@
             {
               "type": "Input.Text",
               "id": "unit1",
-              "label": "Unit",
+              "label": "Unit *",
               "value": "${unit1}"
             }
           ]
@@ -162,7 +162,7 @@
             {
               "type": "Input.ChoiceSet",
               "id": "material2",
-              "label": "Material 2 (optional)",
+              "label": "Material 2 *",
               "style": "compact",
               "value": "${material2}",
               "choices": [
@@ -182,7 +182,7 @@
             {
               "type": "Input.Number",
               "id": "qty2",
-              "label": "Qty",
+              "label": "Qty *",
               "min": 0,
               "value": 0
             }
@@ -195,7 +195,7 @@
             {
               "type": "Input.Text",
               "id": "unit2",
-              "label": "Unit",
+              "label": "Unit *",
               "value": "${unit2}"
             }
           ]
@@ -213,7 +213,7 @@
             {
               "type": "Input.ChoiceSet",
               "id": "material3",
-              "label": "Material 3 (optional)",
+              "label": "Material 3 *",
               "style": "compact",
               "value": "${material3}",
               "choices": [
@@ -233,7 +233,7 @@
             {
               "type": "Input.Number",
               "id": "qty3",
-              "label": "Qty",
+              "label": "Qty *",
               "min": 0,
               "value": 0
             }
@@ -246,7 +246,7 @@
             {
               "type": "Input.Text",
               "id": "unit3",
-              "label": "Unit",
+              "label": "Unit *",
               "value": "${unit3}"
             }
           ]
@@ -269,7 +269,7 @@
                 {
                   "type": "Input.ChoiceSet",
                   "id": "material4",
-                  "label": "Material 4 (optional)",
+                  "label": "Material 4 *",
                   "style": "compact",
                   "choices": [
                     {
@@ -288,7 +288,7 @@
                 {
                   "type": "Input.Number",
                   "id": "qty4",
-                  "label": "Qty",
+                  "label": "Qty *",
                   "min": 0,
                   "value": 0
                 }
@@ -301,7 +301,7 @@
                 {
                   "type": "Input.Text",
                   "id": "unit4",
-                  "label": "Unit"
+                  "label": "Unit *"
                 }
               ]
             }
@@ -325,7 +325,7 @@
                 {
                   "type": "Input.ChoiceSet",
                   "id": "material5",
-                  "label": "Material 5 (optional)",
+                  "label": "Material 5 *",
                   "style": "compact",
                   "choices": [
                     {
@@ -344,7 +344,7 @@
                 {
                   "type": "Input.Number",
                   "id": "qty5",
-                  "label": "Qty",
+                  "label": "Qty *",
                   "min": 0,
                   "value": 0
                 }
@@ -357,7 +357,7 @@
                 {
                   "type": "Input.Text",
                   "id": "unit5",
-                  "label": "Unit"
+                  "label": "Unit *"
                 }
               ]
             }
@@ -381,7 +381,7 @@
                 {
                   "type": "Input.ChoiceSet",
                   "id": "material6",
-                  "label": "Material 6 (optional)",
+                  "label": "Material 6 *",
                   "style": "compact",
                   "choices": [
                     {
@@ -400,7 +400,7 @@
                 {
                   "type": "Input.Number",
                   "id": "qty6",
-                  "label": "Qty",
+                  "label": "Qty *",
                   "min": 0,
                   "value": 0
                 }
@@ -413,7 +413,7 @@
                 {
                   "type": "Input.Text",
                   "id": "unit6",
-                  "label": "Unit"
+                  "label": "Unit *"
                 }
               ]
             }
@@ -437,7 +437,7 @@
                 {
                   "type": "Input.ChoiceSet",
                   "id": "material7",
-                  "label": "Material 7 (optional)",
+                  "label": "Material 7 *",
                   "style": "compact",
                   "choices": [
                     {
@@ -456,7 +456,7 @@
                 {
                   "type": "Input.Number",
                   "id": "qty7",
-                  "label": "Qty",
+                  "label": "Qty *",
                   "min": 0,
                   "value": 0
                 }
@@ -469,7 +469,7 @@
                 {
                   "type": "Input.Text",
                   "id": "unit7",
-                  "label": "Unit"
+                  "label": "Unit *"
                 }
               ]
             }
@@ -493,7 +493,7 @@
                 {
                   "type": "Input.ChoiceSet",
                   "id": "material8",
-                  "label": "Material 8 (optional)",
+                  "label": "Material 8 *",
                   "style": "compact",
                   "choices": [
                     {
@@ -512,7 +512,7 @@
                 {
                   "type": "Input.Number",
                   "id": "qty8",
-                  "label": "Qty",
+                  "label": "Qty *",
                   "min": 0,
                   "value": 0
                 }
@@ -525,7 +525,7 @@
                 {
                   "type": "Input.Text",
                   "id": "unit8",
-                  "label": "Unit"
+                  "label": "Unit *"
                 }
               ]
             }
@@ -549,7 +549,7 @@
                 {
                   "type": "Input.ChoiceSet",
                   "id": "material9",
-                  "label": "Material 9 (optional)",
+                  "label": "Material 9 *",
                   "style": "compact",
                   "choices": [
                     {
@@ -568,7 +568,7 @@
                 {
                   "type": "Input.Number",
                   "id": "qty9",
-                  "label": "Qty",
+                  "label": "Qty *",
                   "min": 0,
                   "value": 0
                 }
@@ -581,7 +581,7 @@
                 {
                   "type": "Input.Text",
                   "id": "unit9",
-                  "label": "Unit"
+                  "label": "Unit *"
                 }
               ]
             }
@@ -605,7 +605,7 @@
                 {
                   "type": "Input.ChoiceSet",
                   "id": "material10",
-                  "label": "Material 10 (optional)",
+                  "label": "Material 10 *",
                   "style": "compact",
                   "choices": [
                     {
@@ -624,7 +624,7 @@
                 {
                   "type": "Input.Number",
                   "id": "qty10",
-                  "label": "Qty",
+                  "label": "Qty *",
                   "min": 0,
                   "value": 0
                 }
@@ -637,7 +637,7 @@
                 {
                   "type": "Input.Text",
                   "id": "unit10",
-                  "label": "Unit"
+                  "label": "Unit *"
                 }
               ]
             }
@@ -1116,7 +1116,7 @@
           "actions": [
             {
               "type": "Action.ToggleVisibility",
-              "title": "− Remove row",
+              "title": "\u00e2\u02c6\u2019 Remove row",
               "targetElements": [
                 {
                   "elementId": "row4",
@@ -1194,7 +1194,7 @@
           "actions": [
             {
               "type": "Action.ToggleVisibility",
-              "title": "− Remove row",
+              "title": "\u00e2\u02c6\u2019 Remove row",
               "targetElements": [
                 {
                   "elementId": "row5",
@@ -1272,7 +1272,7 @@
           "actions": [
             {
               "type": "Action.ToggleVisibility",
-              "title": "− Remove row",
+              "title": "\u00e2\u02c6\u2019 Remove row",
               "targetElements": [
                 {
                   "elementId": "row6",
@@ -1346,7 +1346,7 @@
           "actions": [
             {
               "type": "Action.ToggleVisibility",
-              "title": "− Remove row",
+              "title": "\u00e2\u02c6\u2019 Remove row",
               "targetElements": [
                 {
                   "elementId": "row7",
@@ -1416,7 +1416,7 @@
           "actions": [
             {
               "type": "Action.ToggleVisibility",
-              "title": "− Remove row",
+              "title": "\u00e2\u02c6\u2019 Remove row",
               "targetElements": [
                 {
                   "elementId": "row8",
@@ -1482,7 +1482,7 @@
           "actions": [
             {
               "type": "Action.ToggleVisibility",
-              "title": "− Remove row",
+              "title": "\u00e2\u02c6\u2019 Remove row",
               "targetElements": [
                 {
                   "elementId": "row9",
@@ -1544,7 +1544,7 @@
           "actions": [
             {
               "type": "Action.ToggleVisibility",
-              "title": "− Remove row",
+              "title": "\u00e2\u02c6\u2019 Remove row",
               "targetElements": [
                 {
                   "elementId": "row10",
