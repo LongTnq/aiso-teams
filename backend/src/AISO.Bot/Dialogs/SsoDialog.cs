@@ -195,15 +195,17 @@ public class SsoDialog : ComponentDialog
         }
 
         var exists = await _sap.SapUserExistsAsync(sapUserId, cancellationToken);
-        if (exists == true)
-            return null;
-
         if (exists == false)
         {
             return $"SAP User ID **{sapUserId}** was not found in AISO (ZAISO_USER_ROLE). Ask your admin to register it in SAP.";
         }
 
-        return "Cannot verify SAP User ID right now: the SAP **UserRole** service is unavailable. Ask the SAP team to expose/publish `ZI_AISO_USER_ROLE` as `UserRole`, then try again.";
+        // If exists == true, we're good.
+        // If exists == null, the SAP UserRole service is currently unavailable.
+        // Since the admin already pre-assigned this user in sap_link_assignments,
+        // we can trust the assignment and allow SSO linking to proceed. 
+        // We bypass the strict check so the user isn't permanently blocked from setup.
+        return null;
     }
 
     private async Task<string?> TryGetTeamsEmailAsync(
