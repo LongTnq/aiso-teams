@@ -31,23 +31,30 @@ public class SapTokenManager : ISapTokenManager
     {
         if (_redis != null)
         {
-            var db = _redis.GetDatabase();
-            var cachedJson = await db.StringGetAsync(CacheKey);
-            if (cachedJson.HasValue)
+            try
             {
-                try
+                var db = _redis.GetDatabase();
+                var cachedJson = await db.StringGetAsync(CacheKey);
+                if (cachedJson.HasValue)
                 {
-                    var context = JsonSerializer.Deserialize<SapAuthContext>((string)cachedJson!);
-                    if (context != null)
+                    try
                     {
-                        _logger.LogDebug("Retrieved SAP CSRF token from Redis cache");
-                        return context;
+                        var context = JsonSerializer.Deserialize<SapAuthContext>((string)cachedJson!);
+                        if (context != null)
+                        {
+                            _logger.LogDebug("Retrieved SAP CSRF token from Redis cache");
+                            return context;
+                        }
+                    }
+                    catch (JsonException ex)
+                    {
+                        _logger.LogWarning(ex, "Failed to deserialize cached SAP auth context. Refreshing...");
                     }
                 }
-                catch (JsonException ex)
-                {
-                    _logger.LogWarning(ex, "Failed to deserialize cached SAP auth context. Refreshing...");
-                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Redis connection failed while retrieving SAP CSRF token. Bypassing cache.");
             }
         }
 
@@ -80,8 +87,15 @@ public class SapTokenManager : ISapTokenManager
 
                 if (_redis != null)
                 {
-                    var db = _redis.GetDatabase();
-                    await db.StringSetAsync(CacheKey, JsonSerializer.Serialize(context), TimeSpan.FromMinutes(30));
+                    try
+                    {
+                        var db = _redis.GetDatabase();
+                        await db.StringSetAsync(CacheKey, JsonSerializer.Serialize(context), TimeSpan.FromMinutes(30));
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, "Redis connection failed while caching SAP CSRF token.");
+                    }
                 }
 
                 _logger.LogInformation("Successfully fetched and cached new SAP CSRF token and cookie");
