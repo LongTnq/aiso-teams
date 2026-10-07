@@ -70,13 +70,27 @@ public sealed class BotUserAdminService : IBotUserAdminService
 
         var mapping = await db.UserMappings
             .FirstOrDefaultAsync(u => u.SapUserId == normalized, ct);
-        if (mapping is null)
-            return null;
+        if (mapping is not null)
+        {
+            var hasAssignment = await db.SapLinkAssignments
+                .AnyAsync(a => a.SapUserId == normalized, ct);
+            return ToSummary(mapping, hasAssignment);
+        }
 
-        var hasAssignment = await db.SapLinkAssignments
-            .AnyAsync(a => a.SapUserId == normalized, ct);
+        // Fallback: pre-assigned but not yet linked via SSO.
+        var assignment = await db.SapLinkAssignments
+            .FirstOrDefaultAsync(a => a.SapUserId == normalized, ct);
+        if (assignment is not null)
+        {
+            return new BotUserSummary(
+                assignment.SapUserId,
+                assignment.TeamsEmail ?? assignment.SapUserId,
+                assignment.Role,
+                assignment.SalesOrg,
+                true);
+        }
 
-        return ToSummary(mapping, hasAssignment);
+        return null;
     }
 
     public async Task<BotUserSummary> UpdateAccessAsync(
@@ -91,16 +105,22 @@ public sealed class BotUserAdminService : IBotUserAdminService
         await using var db = await _dbFactory.CreateDbContextAsync(ct);
 
         var mapping = await db.UserMappings
-            .FirstOrDefaultAsync(u => u.SapUserId == normalized, ct)
-            ?? throw new InvalidOperationException(
-                $"No linked Teams user found for SAP ID {normalized}. User must link the bot first.");
-
-        mapping.Role = role;
-        mapping.SalesOrg = org;
-        mapping.UpdatedAt = DateTimeOffset.UtcNow;
+            .FirstOrDefaultAsync(u => u.SapUserId == normalized, ct);
 
         var assignment = await db.SapLinkAssignments
             .FirstOrDefaultAsync(a => a.SapUserId == normalized, ct);
+
+        if (mapping is null && assignment is null)
+            throw new InvalidOperationException(
+                $"No linked or pre-assigned user found for SAP ID {normalized}.");
+
+        if (mapping is not null)
+        {
+            mapping.Role = role;
+            mapping.SalesOrg = org;
+            mapping.UpdatedAt = DateTimeOffset.UtcNow;
+        }
+
         if (assignment is not null)
         {
             assignment.Role = role;
@@ -110,7 +130,15 @@ public sealed class BotUserAdminService : IBotUserAdminService
 
         await db.SaveChangesAsync(ct);
 
-        return ToSummary(mapping, assignment is not null);
+        if (mapping is not null)
+            return ToSummary(mapping, assignment is not null);
+
+        return new BotUserSummary(
+            assignment!.SapUserId,
+            assignment.TeamsEmail ?? assignment.SapUserId,
+            role,
+            org,
+            true);
     }
 
     public async Task<BotUserSummary> PreAssignAccessAsync(

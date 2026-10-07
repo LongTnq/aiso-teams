@@ -89,19 +89,21 @@ internal static class HelpCommandCatalog
             new HelpCommand("admin", 2, "•",
                 "manage user DEV-xxx",    "quản lý user DEV-xxx",     UserRole.Admin, Note: "set role / sales org"),
             new HelpCommand("admin", 3, "•",
-                "view audit log",         "nhật ký audit",            UserRole.Admin),
+                "add user {email} as {SAP-ID}", "thêm nhân viên {email} với mã {SAP-ID}", UserRole.Admin, Note: "email + role + sales org"),
             new HelpCommand("admin", 4, "•",
-                "force release {N}",      "ép release {N}",           UserRole.Admin, Note: "emergency"),
+                "view audit log",         "nhật ký audit",            UserRole.Admin),
             new HelpCommand("admin", 5, "•",
+                "force release {N}",      "ép release {N}",           UserRole.Admin, Note: "emergency"),
+            new HelpCommand("admin", 6, "•",
                 "force cancel {N}",       "ép hủy {N}",               UserRole.Admin, Note: "emergency"),
 
             // -------- delegation: approval proxy --------
-            new HelpCommand("admin", 6, "•",
+            new HelpCommand("admin", 7, "•",
                 "delegate approval to DEV-xxx", "ủy quyền duyệt cho DEV-xxx", UserRole.Manager,
                 Note: "from {date} to {date}, optional max amount"),
-            new HelpCommand("admin", 7, "•",
-                "list my delegations",    "danh sách ủy quyền của tôi", UserRole.Manager),
             new HelpCommand("admin", 8, "•",
+                "list my delegations",    "danh sách ủy quyền của tôi", UserRole.Manager),
+            new HelpCommand("admin", 9, "•",
                 "revoke delegation for DEV-xxx", "thu hồi ủy quyền của DEV-xxx", UserRole.Manager),
 
             // -------- session --------
