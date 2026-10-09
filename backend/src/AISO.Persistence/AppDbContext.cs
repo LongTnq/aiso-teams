@@ -11,6 +11,7 @@ public class AppDbContext : DbContext
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
     public DbSet<OrderApproval> OrderApprovals => Set<OrderApproval>();
     public DbSet<SapLinkAssignment> SapLinkAssignments => Set<SapLinkAssignment>();
+    public DbSet<UserConversationReference> UserConversationReferences => Set<UserConversationReference>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -79,6 +80,16 @@ public class AppDbContext : DbContext
             b.HasIndex(x => x.TeamsUserId)
                 .IsUnique()
                 .HasFilter("\"TeamsUserId\" IS NOT NULL");
+        });
+
+        // UserConversationReference
+        modelBuilder.Entity<UserConversationReference>(b =>
+        {
+            b.ToTable("user_conversation_references");
+            b.HasKey(x => x.Id);
+            b.Property(x => x.TeamsUserId).HasMaxLength(128).IsRequired();
+            b.Property(x => x.ConversationReferenceJson).HasColumnType("jsonb").IsRequired();
+            b.HasIndex(x => x.TeamsUserId).IsUnique();
         });
 
         base.OnModelCreating(modelBuilder);

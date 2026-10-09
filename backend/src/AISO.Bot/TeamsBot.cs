@@ -71,6 +71,17 @@ public class TeamsBot : TeamsActivityHandler
 
     public override async Task OnTurnAsync(ITurnContext turnContext, CancellationToken cancellationToken = default)
     {
+        if (turnContext.Activity.Type == ActivityTypes.Message)
+        {
+            var teamsUserId = turnContext.Activity.From?.Id;
+            if (!string.IsNullOrWhiteSpace(teamsUserId))
+            {
+                var reference = turnContext.Activity.GetConversationReference();
+                var json = JsonConvert.SerializeObject(reference);
+                await _userMappingService.SaveConversationReferenceAsync(teamsUserId, json, cancellationToken);
+            }
+        }
+
         await base.OnTurnAsync(turnContext, cancellationToken);
 
         // Save any state changes that might have occurred during the turn.
