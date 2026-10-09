@@ -289,7 +289,8 @@ public class SalesOrderDetailCardTests
         Assert.Contains("DEV-024", json);
         Assert.Contains("Approved", json);
         Assert.Contains("DEV-249", json);
-        Assert.Contains("Open (Released)", json);
+        Assert.Contains("\"Open\"", json);
+        Assert.DoesNotContain("\"Open (Released)\"", json);
         Assert.Contains("Approved", json);
         Assert.Contains("Order approved — awaiting delivery", json);
         Assert.DoesNotContain("delivery block was cleared", json, StringComparison.OrdinalIgnoreCase);
@@ -348,9 +349,9 @@ public class SalesOrderDetailCardTests
             });
         var json = JsonConvert.SerializeObject(attachment.Content);
 
-        Assert.Contains("Open (Released)", json);
+        Assert.Contains("\"Open\"", json);
         Assert.Contains("Released", json);
-        Assert.DoesNotContain("\"status\":\"Open\"", json);
+        Assert.DoesNotContain("\"Open (Released)\"", json);
     }
 
     [Fact]
