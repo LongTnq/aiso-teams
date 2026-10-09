@@ -13,7 +13,7 @@ public class MyProfileCardTests
     public void BuildMyProfileCard_RendersIdentityAndCounts()
     {
         var response = new MyProfileResponse(
-            SapUser: "DEV-249",
+            SapUser: "DEV-249", DisplayName: "Tran Long",
             Role: UserRole.Manager,
             SalesOrg: "TV01",
             Email: "long.tran@example.com",
@@ -36,7 +36,7 @@ public class MyProfileCardTests
     public void BuildMyProfileCard_ShowsApproximateHint_WhenCapReached()
     {
         var response = new MyProfileResponse(
-            SapUser: "DEV-249",
+            SapUser: "DEV-249", DisplayName: "Tran Long",
             Role: UserRole.Employee,
             SalesOrg: null,
             Email: null,
@@ -73,7 +73,7 @@ public class MyProfileCardTests
         };
 
         var response = new MyProfileResponse(
-            SapUser: "DEV-249",
+            SapUser: "DEV-249", DisplayName: "Tran Long",
             Role: UserRole.Employee,
             SalesOrg: "TV01",
             Email: "long.tran@example.com",
@@ -94,7 +94,7 @@ public class MyProfileCardTests
     public void BuildMyProfileCard_RendersLoadError_WhenSapFailed()
     {
         var response = new MyProfileResponse(
-            SapUser: "DEV-249",
+            SapUser: "DEV-249", DisplayName: "Tran Long",
             Role: UserRole.Employee,
             SalesOrg: "TV01",
             Email: null,
@@ -113,7 +113,7 @@ public class MyProfileCardTests
     public void BuildMyProfileCard_ShowsEmailFact_WhenEmailAvailable()
     {
         var response = new MyProfileResponse(
-            SapUser: "DEV-249",
+            SapUser: "DEV-249", DisplayName: "Tran Long",
             Role: UserRole.Employee,
             SalesOrg: "TV01",
             Email: "long.tran@example.com",
@@ -132,7 +132,7 @@ public class MyProfileCardTests
     public void BuildMyProfileCard_HidesEmailFact_WhenEmailNull()
     {
         var response = new MyProfileResponse(
-            SapUser: "DEV-249",
+            SapUser: "DEV-249", DisplayName: "Tran Long",
             Role: UserRole.Employee,
             SalesOrg: "TV01",
             Email: null,
@@ -155,7 +155,7 @@ public class MyProfileCardTests
     public void BuildMyProfileCard_TreatsWhitespaceEmailAsNull()
     {
         var response = new MyProfileResponse(
-            SapUser: "DEV-249",
+            SapUser: "DEV-249", DisplayName: "Tran Long",
             Role: UserRole.Employee,
             SalesOrg: "TV01",
             Email: "   ",
@@ -177,7 +177,7 @@ public class MyProfileCardTests
     {
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
         var response = new MyProfileResponse(
-            SapUser: "DEV-249",
+            SapUser: "DEV-249", DisplayName: "Tran Long",
             Role: UserRole.Employee,
             SalesOrg: "TV01",
             Email: "long.tran@example.com",
@@ -203,7 +203,7 @@ public class MyProfileCardTests
     {
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
         var response = new MyProfileResponse(
-            SapUser: "DEV-249",
+            SapUser: "DEV-249", DisplayName: "Tran Long",
             Role: UserRole.Employee,
             SalesOrg: "TV01",
             Email: null,
@@ -226,7 +226,7 @@ public class MyProfileCardTests
     {
         // Postgres fallback path does not carry validity bounds.
         var response = new MyProfileResponse(
-            SapUser: "DEV-249",
+            SapUser: "DEV-249", DisplayName: "Tran Long",
             Role: UserRole.Employee,
             SalesOrg: "TV01",
             Email: null,
@@ -244,3 +244,4 @@ public class MyProfileCardTests
         Assert.Contains("\"title\":\"Sales org status\"", json);
     }
 }
+

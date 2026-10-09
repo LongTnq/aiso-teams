@@ -105,6 +105,18 @@ public sealed class UserScopeLookup : IUserScopeLookup
         return string.IsNullOrWhiteSpace(email) ? null : email;
     }
 
+    public async Task<string?> GetDisplayNameBySapUserAsync(string sapUserId, CancellationToken ct = default)
+    {
+        await using var db = await _dbFactory.CreateDbContextAsync(ct);
+
+        var displayName = await db.UserMappings
+            .Where(u => u.SapUserId == sapUserId)
+            .Select(u => u.DisplayName)
+            .FirstOrDefaultAsync(ct);
+
+        return string.IsNullOrWhiteSpace(displayName) ? null : displayName;
+    }
+
     public async Task SetDelegatedBySapUserAsync(string delegateUser, string? delegatorUser, DateTimeOffset? validTo = null, decimal? maxAmount = null, CancellationToken ct = default)
     {
         await using var db = await _dbFactory.CreateDbContextAsync(ct);
