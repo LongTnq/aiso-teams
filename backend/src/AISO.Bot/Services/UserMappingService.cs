@@ -281,6 +281,31 @@ public class UserMappingService
         }
     }
 
+    public async Task SaveConversationReferenceAsync(string teamsUserId, string conversationReferenceJson, CancellationToken cancellationToken = default)
+    {
+        var reference = await _dbContext.UserConversationReferences
+            .Where(u => u.TeamsUserId == teamsUserId)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (reference == null)
+        {
+            _dbContext.UserConversationReferences.Add(new UserConversationReference
+            {
+                TeamsUserId = teamsUserId,
+                ConversationReferenceJson = conversationReferenceJson,
+                CreatedAt = DateTimeOffset.UtcNow,
+                UpdatedAt = DateTimeOffset.UtcNow
+            });
+        }
+        else
+        {
+            reference.ConversationReferenceJson = conversationReferenceJson;
+            reference.UpdatedAt = DateTimeOffset.UtcNow;
+        }
+
+        await _dbContext.SaveChangesAsync(cancellationToken);
+    }
+
     public static string NormalizeEmail(string email) => email.Trim().ToLowerInvariant();
 
     private static string? NormalizeSalesOrg(string? salesOrg) =>
