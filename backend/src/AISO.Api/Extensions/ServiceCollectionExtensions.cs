@@ -121,6 +121,7 @@ public static class ServiceCollectionExtensions
 
         // Register the SSO Dialog and User Mapping Service
         services.AddTransient<UserMappingService>();
+        services.AddTransient<ProactiveMessagingService>();
         services.AddTransient<SsoDialog>();
 
         // Register the Bot
