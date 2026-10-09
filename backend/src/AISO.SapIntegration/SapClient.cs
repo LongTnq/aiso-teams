@@ -1482,6 +1482,61 @@ public class SapClient : ISapClient
         }
     }
 
+    public async Task<IReadOnlyList<SapPricedMaterial>> GetPricedMaterialsAsync(
+        string salesOrg,
+        string distChannel,
+        string? customer = null,
+        int top = 100,
+        CancellationToken ct = default)
+    {
+        var take = Math.Clamp(top, 1, 500);
+        var builder = new ODataQueryBuilder("PricedMaterial")
+            .AddCustomParam("sap-client", "324")
+            .Top(take);
+
+        var filter = $"SalesOrg eq '{salesOrg.Trim().ToUpperInvariant()}' and DistChannel eq '{distChannel.Trim().ToUpperInvariant()}'";
+
+        var custFilter = string.IsNullOrWhiteSpace(customer)
+            ? "Customer eq ''"
+            : $"(Customer eq '' or Customer eq '{customer.Trim()}')";
+
+        builder.FilterRaw($"{filter} and {custFilter}");
+
+        var url = builder.Build();
+        _logger.LogInformation("Calling SAP OData: {Url}", url);
+
+        try
+        {
+            var response = await _httpClient.GetAsync(url, ct);
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogWarning("PricedMaterial GET failed: {StatusCode}", (int)response.StatusCode);
+                return Array.Empty<SapPricedMaterial>();
+            }
+
+            var rawJson = await response.Content.ReadAsStringAsync(ct);
+            var result = JsonSerializer.Deserialize<ODataResponse<SapPricedMaterialDto>>(rawJson, JsonOptions);
+
+            if (result?.Value == null)
+                return Array.Empty<SapPricedMaterial>();
+
+            return result.Value
+                .Where(r => !string.IsNullOrWhiteSpace(r.Material))
+                .Select(r => new SapPricedMaterial(
+                    SalesOrg: r.SalesOrg ?? string.Empty,
+                    DistChannel: r.DistChannel ?? string.Empty,
+                    Customer: r.Customer ?? string.Empty,
+                    Material: FormatMaterialNumber(r.Material),
+                    Currency: r.Currency ?? string.Empty))
+                .ToList();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error fetching PricedMaterial");
+            return Array.Empty<SapPricedMaterial>();
+        }
+    }
+
     public async Task<IReadOnlyList<SapValidCustomer>> GetValidCustomersAsync(
         string? salesOrg = null,
         string? distChannel = null,
@@ -1518,7 +1573,7 @@ public class SapClient : ISapClient
         // authorization/filter issue upstream. Switch back to CustomerReady
         // once root cause is identified.
         var take = Math.Clamp(top, 1, 500);
-        var builder = new ODataQueryBuilder("ValidCustomer")
+        var builder = new ODataQueryBuilder("CustomerReady")
             .AddCustomParam("sap-client", "324")
             .Top(take);
 
@@ -1543,13 +1598,13 @@ public class SapClient : ISapClient
             if (response.StatusCode is System.Net.HttpStatusCode.NotFound
                 or System.Net.HttpStatusCode.BadRequest)
             {
-                _logger.LogWarning("ValidCustomer entity unavailable: {StatusCode}", (int)response.StatusCode);
+                _logger.LogWarning("CustomerReady entity unavailable: {StatusCode}", (int)response.StatusCode);
                 return Array.Empty<SapValidCustomer>();
             }
 
             if (!response.IsSuccessStatusCode)
             {
-                _logger.LogWarning("ValidCustomer GET failed: {StatusCode}", (int)response.StatusCode);
+                _logger.LogWarning("CustomerReady GET failed: {StatusCode}", (int)response.StatusCode);
                 return Array.Empty<SapValidCustomer>();
             }
 
@@ -1571,7 +1626,7 @@ public class SapClient : ISapClient
         }
         catch (Exception ex) when (ex is not SapODataException)
         {
-            _logger.LogWarning(ex, "ValidCustomer lookup failed");
+            _logger.LogWarning(ex, "CustomerReady lookup failed");
             return Array.Empty<SapValidCustomer>();
         }
     }

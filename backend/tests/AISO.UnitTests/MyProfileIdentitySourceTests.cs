@@ -202,6 +202,8 @@ public class MyProfileIdentitySourceTests
             => _inner.GetDivisionListAsync(salesOrg, distChannel, ct);
         public Task<IReadOnlyList<SapDocType>> GetDocTypeListAsync(CancellationToken ct = default)
             => _inner.GetDocTypeListAsync(ct);
+        public Task<IReadOnlyList<AISO.SapIntegration.SapPricedMaterial>> GetPricedMaterialsAsync(string salesOrg, string distChannel, string? customer = null, int top = 200, CancellationToken ct = default)
+            => _inner.GetPricedMaterialsAsync(salesOrg, distChannel, customer, top, ct);
     }
 
     /// <summary>Static config (no Postgres) for direct MyProfileFunction wiring.</summary>

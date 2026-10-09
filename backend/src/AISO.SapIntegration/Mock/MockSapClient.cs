@@ -255,6 +255,42 @@ public sealed class MockSapClient : ISapClient
         return Task.FromResult(list);
     }
 
+    public Task<IReadOnlyList<SapPricedMaterial>> GetPricedMaterialsAsync(
+        string salesOrg,
+        string distChannel,
+        string? customer = null,
+        int top = 100,
+        CancellationToken ct = default)
+    {
+        // Mock data for priced materials
+        var allMaterials = new List<SapPricedMaterial>
+        {
+            new("1000", "10", "", "000000000000000110", "USD"),
+            new("1000", "10", "", "000000000000000111", "USD"),
+            // MATE_DEV387 mock mapped to TG11 which we use for demo
+            new("UE00", "10", "", "TG11", "USD"),
+            new("UE00", "10", "1000", "TG12", "USD"),
+        };
+
+        IEnumerable<SapPricedMaterial> filtered = allMaterials;
+        if (!string.IsNullOrWhiteSpace(salesOrg))
+            filtered = filtered.Where(m => string.Equals(m.SalesOrg, salesOrg, StringComparison.OrdinalIgnoreCase));
+        if (!string.IsNullOrWhiteSpace(distChannel))
+            filtered = filtered.Where(m => string.Equals(m.DistChannel, distChannel, StringComparison.OrdinalIgnoreCase));
+
+        if (!string.IsNullOrWhiteSpace(customer))
+        {
+            filtered = filtered.Where(m => m.Customer == "" || string.Equals(m.Customer, customer.Trim(), StringComparison.OrdinalIgnoreCase));
+        }
+        else
+        {
+            filtered = filtered.Where(m => m.Customer == "");
+        }
+
+        IReadOnlyList<SapPricedMaterial> list = filtered.Take(Math.Clamp(top, 1, 100)).ToList();
+        return Task.FromResult(list);
+    }
+
     public Task<SalesOrder?> GetSalesOrderByIdAsync(string soNumber, CancellationToken ct = default)
     {
         _logger?.LogDebug("MockSapClient.GetSalesOrderByIdAsync: {SoNumber}", soNumber);

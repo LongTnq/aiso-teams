@@ -243,6 +243,8 @@ public class ForceCancelRoutingTests
             => throw new NotImplementedException();
         public Task<SalesOrder> ForwardOrderAsync(string soNumber, string forwardToUser, string requestingTeamsUser, CancellationToken ct = default, string? remarks = null)
             => throw new NotImplementedException();
+        public Task<IReadOnlyList<AISO.SapIntegration.SapPricedMaterial>> GetPricedMaterialsAsync(string salesOrg, string distChannel, string? customer = null, int top = 200, CancellationToken ct = default)
+            => throw new NotImplementedException();
         public Task<AISO.Domain.Kpi.KpiSummary> GetKpiSummaryAsync(AISO.Domain.Kpi.KpiSummaryQuery query, CancellationToken ct = default)
             => throw new NotImplementedException();
         public Task<IReadOnlyList<AISO.Domain.Kpi.KpiByCustomer>> GetKpiByCustomerAsync(AISO.Domain.Kpi.KpiByCustomerQuery query, CancellationToken ct = default)
