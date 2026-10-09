@@ -222,6 +222,9 @@ public class MyProfileIdentitySourceTests
         public Task<string?> GetEmailBySapUserAsync(string sapUserId, CancellationToken ct = default)
             => Task.FromResult<string?>(null);
 
+        public Task<string?> GetDisplayNameBySapUserAsync(string sapUserId, CancellationToken ct = default)
+            => Task.FromResult<string?>(null);
+
         public Task<DelegationInfo> GetDelegationInfoAsync(string sapUserId, CancellationToken ct = default)
             => Task.FromResult(new DelegationInfo(null, null));
 
@@ -232,3 +235,4 @@ public class MyProfileIdentitySourceTests
             => Task.FromResult<IReadOnlyList<ActiveDelegation>>(Array.Empty<ActiveDelegation>());
     }
 }
+

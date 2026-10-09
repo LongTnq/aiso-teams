@@ -194,6 +194,9 @@ public class MyProfileFunctionTests
         public Task<string?> GetEmailBySapUserAsync(string sapUserId, CancellationToken ct = default)
             => Task.FromResult(Email);
 
+        public Task<string?> GetDisplayNameBySapUserAsync(string sapUserId, CancellationToken ct = default)
+            => Task.FromResult<string?>("Test User");
+
         public Task<DelegationInfo> GetDelegationInfoAsync(string sapUserId, CancellationToken ct = default)
             => Task.FromResult(new DelegationInfo(null, null));
 
@@ -259,3 +262,4 @@ public class MyProfileFunctionTests
         Assert.Null(payload.SalesOrgIsActive);
     }
 }
+

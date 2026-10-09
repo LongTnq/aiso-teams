@@ -76,6 +76,7 @@ public sealed class MyProfileFunction : IFunction
         // Read in parallel with the orders query below to avoid paying the cost
         // twice when the SAP orders request is slow.
         var emailTask = _scopeLookup.GetEmailBySapUserAsync(requestingSapUser, ct);
+        var displayNameTask = _scopeLookup.GetDisplayNameBySapUserAsync(requestingSapUser, ct);
 
         // Orders owned by the current user (top=200 for approximate stats).
         var query = new SalesOrdersQuery
@@ -94,8 +95,10 @@ public sealed class MyProfileFunction : IFunction
             _logger.LogWarning(ex, "SAP error while loading own orders for {SapUser}", requestingSapUser);
             // Build a partial response so the user still sees their identity.
             var partialEmail = await SafeGetEmailAsync(emailTask, requestingSapUser, ct);
+            var partialName = await SafeGetEmailAsync(displayNameTask, requestingSapUser, ct);
             return FunctionResult.Ok(new MyProfileResponse(
                 SapUser: requestingSapUser,
+                DisplayName: partialName,
                 Role: identity.Role,
                 SalesOrg: identity.SalesOrg,
                 Email: partialEmail,
@@ -120,9 +123,11 @@ public sealed class MyProfileFunction : IFunction
             .ToList();
 
         var email = await SafeGetEmailAsync(emailTask, requestingSapUser, ct);
+        var displayName = await SafeGetEmailAsync(displayNameTask, requestingSapUser, ct);
 
         var response = new MyProfileResponse(
             SapUser: requestingSapUser,
+            DisplayName: displayName,
             Role: identity.Role,
             SalesOrg: identity.SalesOrg,
             Email: email,
@@ -260,6 +265,7 @@ public sealed class MyProfileFunction : IFunction
 /// </summary>
 public sealed record MyProfileResponse(
     string SapUser,
+    string? DisplayName,
     UserRole Role,
     string? SalesOrg,
     string? Email,

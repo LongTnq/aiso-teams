@@ -322,6 +322,8 @@ public class BilingualKeywordTests
         public Task<string?> GetEmailBySapUserAsync(string sapUserId, CancellationToken ct = default) =>
             Task.FromResult<string?>(null);
 
+        public Task<string?> GetDisplayNameBySapUserAsync(string sapUserId, CancellationToken ct = default) => Task.FromResult<string?>(null);
+
         public Task<AISO.Domain.Users.DelegationInfo> GetDelegationInfoAsync(string sapUserId, CancellationToken ct = default) =>
             Task.FromResult(new AISO.Domain.Users.DelegationInfo(null, null));
 
@@ -329,3 +331,4 @@ public class BilingualKeywordTests
             => Task.CompletedTask; public Task<IReadOnlyList<AISO.Domain.Users.ActiveDelegation>> GetActiveDelegationsAsync(string? filterDelegatorUser = null, CancellationToken ct = default) => Task.FromResult<IReadOnlyList<AISO.Domain.Users.ActiveDelegation>>(Array.Empty<AISO.Domain.Users.ActiveDelegation>());
     }
 }
+
