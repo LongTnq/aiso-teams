@@ -21,4 +21,5 @@ define service ZSD_AISO_SALES_ORDER {
   expose ZC_AISO_DIST_CHANNEL_LIST as DistChannelList;
   expose ZC_AISO_DIVISION_LIST as DivisionList;
   expose ZC_AISO_DOC_TYPE_LIST as DocTypeList;
+  expose ZC_AISO_PRICED_MATERIAL as PricedMaterial;
 }
