@@ -1591,21 +1591,32 @@ public class TeamsBot : TeamsActivityHandler
 
                         if (!validCombo)
                         {
-                            _logger.LogWarning(
-                                "create_so_step1: rejected invalid SalesArea tuple Org={Org}, Channel={Channel}, Division={Division} — not present in SAP SalesArea.",
-                                salesOrg, distChannel, division);
+                            // Try to find a valid combo for the selected SalesOrg to auto-correct
+                            var fallback = allAreas.FirstOrDefault(a => string.Equals(a.SalesOrg, salesOrg, StringComparison.OrdinalIgnoreCase));
+                            if (fallback != null)
+                            {
+                                distChannel = fallback.DistChannel;
+                                division = fallback.Division;
+                                // We auto-corrected, so we can proceed with validCombo = true
+                            }
+                            else
+                            {
+                                _logger.LogWarning(
+                                    "create_so_step1: rejected invalid SalesArea tuple Org={Org}, Channel={Channel}, Division={Division} — not present in SAP SalesArea.",
+                                    salesOrg, distChannel, division);
 
-                            await turnContext.SendActivityAsync(
-                                MessageFactory.Attachment(TeamsCardBuilder.BuildCreateOrderStep1Card(
-                                    salesOrgs,
-                                    selectedSalesOrg: salesOrg,
-                                    selectedDistChannel: distChannel,
-                                    selectedDivision: division,
-                                    allSalesAreas: allAreas,
-                                    invalidCombinationMessage:
-                                        $"Sales Organization **{salesOrg}** / Distribution Channel **{distChannel}** / Division **{division}** is not a valid combination in SAP. Pick another Channel or Division.")),
-                                cancellationToken);
-                            return;
+                                await turnContext.SendActivityAsync(
+                                    MessageFactory.Attachment(TeamsCardBuilder.BuildCreateOrderStep1Card(
+                                        salesOrgs,
+                                        selectedSalesOrg: salesOrg,
+                                        selectedDistChannel: distChannel,
+                                        selectedDivision: division,
+                                        allSalesAreas: allAreas,
+                                        invalidCombinationMessage:
+                                            $"Sales Organization **{salesOrg}** / Distribution Channel **{distChannel}** / Division **{division}** is not a valid combination in SAP. Pick another Channel or Division.")),
+                                    cancellationToken);
+                                return;
+                            }
                         }
 
                         var salesAreaKey = $"{salesOrg}|{distChannel}|{division}";
@@ -1766,6 +1777,17 @@ public class TeamsBot : TeamsActivityHandler
                             materials = await _sap.GetValidMaterialSalesAsync(salesOrg, distChannel, top: 75, ct: cancellationToken);
                             if (materials.Count == 0)
                                 materials = await _sap.GetValidMaterialSalesAsync(top: 75, ct: cancellationToken);
+
+                            // Lấy giá trị giao với danh sách PricedMaterial
+                            var pricedMaterials = await _sap.GetPricedMaterialsAsync(salesOrg, distChannel, validatedCustomerKey, top: 200, ct: cancellationToken);
+                            var validCurrency = string.IsNullOrWhiteSpace(currency) ? "USD" : currency;
+
+                            var pricedMaterialSet = pricedMaterials
+                                .Where(p => string.IsNullOrWhiteSpace(p.Currency) || string.Equals(p.Currency, validCurrency, StringComparison.OrdinalIgnoreCase))
+                                .Select(p => p.Material.TrimStart('0'))
+                                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+                            materials = materials.Where(m => pricedMaterialSet.Contains(m.Material.TrimStart('0'))).ToList();
                         }
                         catch
                         {
@@ -1899,8 +1921,9 @@ public class TeamsBot : TeamsActivityHandler
                             var parts = matVal.Split('|', StringSplitOptions.RemoveEmptyEntries);
                             var itemMaterial = parts.Length >= 1 ? parts[0].Trim() : matVal;
                             var itemPlant = parts.Length >= 2 ? parts[1].Trim() : "";
-                            var itemUnit = valueObj.TryGetValue(unitKey, StringComparison.OrdinalIgnoreCase, out var uVal)
-                                ? uVal?.ToString()?.Trim() : (parts.Length >= 3 ? parts[2].Trim() : "");
+
+                            var rawUnit = valueObj.TryGetValue(unitKey, StringComparison.OrdinalIgnoreCase, out var uVal) ? uVal?.ToString()?.Trim() : null;
+                            var itemUnit = !string.IsNullOrWhiteSpace(rawUnit) ? rawUnit : (parts.Length >= 3 ? parts[2].Trim() : "");
 
                             if (string.IsNullOrWhiteSpace(itemPlant) || string.IsNullOrWhiteSpace(itemUnit))
                             {
@@ -2021,7 +2044,8 @@ public class TeamsBot : TeamsActivityHandler
                             // Step 4 confirmed — line items come as JSON.
                             try
                             {
-                                var parsed = System.Text.Json.JsonSerializer.Deserialize<List<AISO.AiOrchestration.Functions.ConfirmCreateOrderLine>>(lineItemsJson);
+                                var opts = new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                                var parsed = System.Text.Json.JsonSerializer.Deserialize<List<AISO.AiOrchestration.Functions.ConfirmCreateOrderLine>>(lineItemsJson, opts);
                                 if (parsed != null)
                                 {
                                     foreach (var item in parsed)
@@ -2170,9 +2194,41 @@ public class TeamsBot : TeamsActivityHandler
                         {
                             var errorCode = sapEx.IsValidationError ? "VALIDATION" : "SAP_ERROR";
                             _logger.LogError(sapEx, "SAP error creating sales order (classified={ErrorCode})", errorCode);
-                            await turnContext.SendActivityAsync(
-                                MessageFactory.Attachment(TeamsCardBuilder.BuildErrorCard(errorCode, sapEx.Message)),
-                                cancellationToken);
+
+                            if (sapEx.IsValidationError)
+                            {
+                                var reviewLines = lineItemDtos.Select(i =>
+                                    new AISO.AiOrchestration.Functions.ConfirmCreateOrderLine(i.Material, i.OrderQty, i.Plant, i.Unit)).ToList();
+                                var saLabel = $"{salesOrg} / {distChannel} / {division}";
+                                var saKey = $"{salesOrg}|{distChannel}|{division}";
+                                var cLabel = valueObj.TryGetValue("customerLabel", StringComparison.OrdinalIgnoreCase, out var clTok)
+                                    ? clTok?.ToString() : customerId;
+
+                                await turnContext.SendActivityAsync(
+                                    MessageFactory.Attachment(TeamsCardBuilder.BuildCreateOrderStep4ReviewCard(
+                                        saLabel,
+                                        cLabel ?? "",
+                                        shipToParty,
+                                        docType,
+                                        currency,
+                                        purchaseOrderRef,
+                                        requestedDeliveryDate,
+                                        reviewLines,
+                                        saKey,
+                                        salesOrg,
+                                        distChannel,
+                                        division,
+                                        customerId,
+                                        resolvedCustomerId,
+                                        errorMessage: sapEx.Message)),
+                                    cancellationToken);
+                            }
+                            else
+                            {
+                                await turnContext.SendActivityAsync(
+                                    MessageFactory.Attachment(TeamsCardBuilder.BuildErrorCard(errorCode, sapEx.Message)),
+                                    cancellationToken);
+                            }
                         }
                         catch (Exception ex)
                         {

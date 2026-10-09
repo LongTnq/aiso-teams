@@ -306,6 +306,25 @@ public class UserMappingService
         await _dbContext.SaveChangesAsync(cancellationToken);
     }
 
+    public async Task<string?> GetConversationReferenceAsync(string teamsUserId, CancellationToken cancellationToken = default)
+    {
+        var reference = await _dbContext.UserConversationReferences
+            .Where(u => u.TeamsUserId == teamsUserId)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        return reference?.ConversationReferenceJson;
+    }
+
+    public async Task<string?> GetTeamsUserIdBySapUserAsync(string sapUserId, CancellationToken cancellationToken = default)
+    {
+        var normalizedSap = sapUserId.Trim().ToUpperInvariant();
+        var mapping = await _dbContext.UserMappings
+            .Where(u => u.SapUserId == normalizedSap)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        return mapping?.TeamsUserId;
+    }
+
     public static string NormalizeEmail(string email) => email.Trim().ToLowerInvariant();
 
     private static string? NormalizeSalesOrg(string? salesOrg) =>

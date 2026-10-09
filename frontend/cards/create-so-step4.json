@@ -18,6 +18,21 @@
       ]
     },
     {
+      "type": "Container",
+      "style": "Attention",
+      "bleed": true,
+      "isVisible": "${hasErrorMessage}",
+      "items": [
+        {
+          "type": "TextBlock",
+          "text": "${errorMessage}",
+          "weight": "Bolder",
+          "color": "Attention",
+          "wrap": true
+        }
+      ]
+    },
+    {
       "type": "FactSet",
       "spacing": "Small",
       "facts": [
@@ -107,7 +122,7 @@
       "type": "Action.Submit",
       "title": "Back",
       "data": {
-        "action": "create_so_step3_submit",
+        "action": "create_so_step2_submit",
         "salesArea": "${salesAreaKey}",
         "salesOrg": "${salesOrg}",
         "distChannel": "${distChannel}",

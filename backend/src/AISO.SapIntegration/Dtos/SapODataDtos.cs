@@ -26,6 +26,15 @@ internal class SapValidMaterialSalesDto
     public string? MaterialName { get; set; }
 }
 
+internal class SapPricedMaterialDto
+{
+    public string SalesOrg { get; set; } = string.Empty;
+    public string DistChannel { get; set; } = string.Empty;
+    public string Customer { get; set; } = string.Empty;
+    public string Material { get; set; } = string.Empty;
+    public string Currency { get; set; } = string.Empty;
+}
+
 internal class SapSalesAreaDto
 {
     public string? SalesOrg { get; set; }

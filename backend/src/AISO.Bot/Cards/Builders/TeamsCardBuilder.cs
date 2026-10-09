@@ -517,7 +517,8 @@ internal static class TeamsCardBuilder
         string distChannel,
         string division,
         string customerKey,
-        string customerId) =>
+        string customerId,
+        string? errorMessage = null) =>
         CardTemplateFileLoader.BuildAdaptiveCardAttachment(
             "create-so-step4.json",
             new
@@ -536,7 +537,9 @@ internal static class TeamsCardBuilder
                 distChannel,
                 division,
                 customerKey,
-                customerId
+                customerId,
+                hasErrorMessage = !string.IsNullOrWhiteSpace(errorMessage) ? "true" : "false",
+                errorMessage = errorMessage ?? ""
             });
 
     /// <summary>Backward-compatible overload (single material).</summary>

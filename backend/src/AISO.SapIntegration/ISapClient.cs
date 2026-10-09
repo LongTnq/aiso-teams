@@ -164,6 +164,14 @@ public interface ISapClient
         int top = 30,
         CancellationToken ct = default);
 
+    /// <summary>Materials that have a valid PR00 price condition today.</summary>
+    Task<IReadOnlyList<SapPricedMaterial>> GetPricedMaterialsAsync(
+        string salesOrg,
+        string distChannel,
+        string? customer = null,
+        int top = 100,
+        CancellationToken ct = default);
+
     /// <summary>
     /// Customers ready for sales order creation from
     /// <c>ValidCustomer</c> (ZI_AISO_VALID_CUSTOMER). Any KNVV row in the
@@ -353,6 +361,14 @@ public sealed record SapValidMaterialSales(
     string Plant = "",
     string BaseUnit = "",
     string MaterialName = "");
+
+/// <summary>OData <c>PricedMaterial</c> row (ZSD_AISO_SALES_ORDER).</summary>
+public sealed record SapPricedMaterial(
+    string SalesOrg,
+    string DistChannel,
+    string Customer,
+    string Material,
+    string Currency);
 
 public sealed record CreateSalesOrderDto
 {
