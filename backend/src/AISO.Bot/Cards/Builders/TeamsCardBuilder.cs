@@ -1064,10 +1064,7 @@ internal static class TeamsCardBuilder
 
         if (showReleasedUx)
         {
-            var label = status == SalesOrderStatus.Open
-                ? "Open (Released)"
-                : $"{status} (Released)";
-            return (label, "Good", true, "Released");
+            return (status.ToString(), "Good", true, "Released");
         }
 
         if (approvedButStillBlocked)
