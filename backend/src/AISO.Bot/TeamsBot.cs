@@ -2157,41 +2157,41 @@ public class TeamsBot : TeamsActivityHandler
                             }
                         }
 
-                        // C# Pre-validation for PR00 (Price conditions)
-                        // SAP ABAP truncates messages if there are too many missing items.
-                        // We check it here to construct a full list for the user.
                         try
                         {
-                            var pricedMaterials = await _sap.GetPricedMaterialsAsync(salesOrg, distChannel, resolvedCustomerId, top: 500, ct: cancellationToken);
-                            var validCurrency = string.IsNullOrWhiteSpace(currency) ? "USD" : currency;
-                            var pricedMaterialSet = pricedMaterials
-                                .Where(p => string.IsNullOrWhiteSpace(p.Currency) || string.Equals(p.Currency, validCurrency, StringComparison.OrdinalIgnoreCase))
-                                .Select(p => p.Material.TrimStart('0'))
-                                .ToHashSet(StringComparer.OrdinalIgnoreCase);
-
-                            var missingPr00Items = lineItemDtos
-                                .Where(item => !pricedMaterialSet.Contains(item.Material.TrimStart('0')))
-                                .ToList();
-
-                            if (missingPr00Items.Count > 0)
+                            // C# Pre-validation for PR00 (Price conditions)
+                            // SAP ABAP truncates messages if there are too many missing items.
+                            // We check it here to construct a full list for the user.
+                            try
                             {
-                                // Construct the fake SAP message format which our FormatSapErrorMessage will nicely format
-                                var missingString = string.Join(" , ", missingPr00Items.Select((item, index) => $"{(index + 1) * 10} :{item.Material}"));
-                                var saStr = $"Sales area {salesOrg}/{distChannel}";
-                                throw new SapODataException(400, $"Chưa có giá PR00 cho item (item:material):{missingString}{saStr}");
-                            }
-                        }
-                        catch (SapODataException)
-                        {
-                            throw; // Re-throw our constructed exception
-                        }
-                        catch (Exception ex)
-                        {
-                            _logger.LogWarning(ex, "Failed to pre-validate PR00 prices. Will proceed and let SAP validate.");
-                        }
+                                var pricedMaterials = await _sap.GetPricedMaterialsAsync(salesOrg, distChannel, resolvedCustomerId, top: 500, ct: cancellationToken);
+                                var validCurrency = string.IsNullOrWhiteSpace(currency) ? "USD" : currency;
+                                var pricedMaterialSet = pricedMaterials
+                                    .Where(p => string.IsNullOrWhiteSpace(p.Currency) || string.Equals(p.Currency, validCurrency, StringComparison.OrdinalIgnoreCase))
+                                    .Select(p => p.Material.TrimStart('0'))
+                                    .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
-                        try
-                        {
+                                var missingPr00Items = lineItemDtos
+                                    .Where(item => !pricedMaterialSet.Contains(item.Material.TrimStart('0')))
+                                    .ToList();
+
+                                if (missingPr00Items.Count > 0)
+                                {
+                                    // Construct the fake SAP message format which our FormatSapErrorMessage will nicely format
+                                    var missingString = string.Join(" , ", missingPr00Items.Select((item, index) => $"{(index + 1) * 10} :{item.Material}"));
+                                    var saStr = $"Sales area {salesOrg}/{distChannel}";
+                                    throw new SapODataException(400, $"Chưa có giá PR00 cho item (item:material):{missingString}{saStr}");
+                                }
+                            }
+                            catch (SapODataException)
+                            {
+                                throw; // Re-throw our constructed exception to the outer block
+                            }
+                            catch (Exception ex)
+                            {
+                                _logger.LogWarning(ex, "Failed to pre-validate PR00 prices. Will proceed and let SAP validate.");
+                            }
+
                             var created = await _sap.CreateSalesOrderAsync(
                                 new CreateSalesOrderDto
                                 {
@@ -4070,11 +4070,11 @@ public class TeamsBot : TeamsActivityHandler
                 var suffix = msg.Substring(idx).Trim();
 
                 var items = itemsPart.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
-                                     .Select(i => $"- {i.Trim()}");
+                                     .Select(i => $"{i.Trim()}");
 
-                return $"**Chưa có giá PR00 cho item (item: material)**\n\n" +
+                return $"Missing PR00 price for item (item: material)\n\n" +
                        $"{string.Join("\n\n", items)}\n\n" +
-                       $"**{suffix}**";
+                       $"{suffix}";
             }
         }
         return msg;
