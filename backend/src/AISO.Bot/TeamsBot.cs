@@ -1774,9 +1774,9 @@ public class TeamsBot : TeamsActivityHandler
                         IReadOnlyList<SapValidMaterialSales> materials;
                         try
                         {
-                            materials = await _sap.GetValidMaterialSalesAsync(salesOrg, distChannel, top: 75, ct: cancellationToken);
+                            materials = await _sap.GetValidMaterialSalesAsync(salesOrg, distChannel, top: 500, ct: cancellationToken);
                             if (materials.Count == 0)
-                                materials = await _sap.GetValidMaterialSalesAsync(top: 75, ct: cancellationToken);
+                                materials = await _sap.GetValidMaterialSalesAsync(top: 500, ct: cancellationToken);
 
                             // Lấy giá trị giao với danh sách PricedMaterial
                             var pricedMaterials = await _sap.GetPricedMaterialsAsync(salesOrg, distChannel, validatedCustomerKey, top: 200, ct: cancellationToken);
@@ -1787,7 +1787,9 @@ public class TeamsBot : TeamsActivityHandler
                                 .Select(p => p.Material.TrimStart('0'))
                                 .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
-                            materials = materials.Where(m => pricedMaterialSet.Contains(m.Material.TrimStart('0'))).ToList();
+                            // TEMPORARY FIX: Do not filter materials because PricedMaterial is returning items 
+                            // not present in ValidMaterialSales for UE00/WH (e.g. BOTL1009), causing empty dropdowns.
+                            // materials = materials.Where(m => pricedMaterialSet.Contains(m.Material.TrimStart('0'))).ToList();
                         }
                         catch
                         {
