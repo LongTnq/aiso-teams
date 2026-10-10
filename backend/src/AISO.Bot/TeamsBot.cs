@@ -2176,12 +2176,12 @@ public class TeamsBot : TeamsActivityHandler
                                 ResultStatus = "Success"
                             }, cancellationToken);
 
-                            await turnContext.SendActivityAsync(
-                                MessageFactory.Attachment(TeamsCardBuilder.BuildSuccessCard(
-                                    created.SoNumber,
-                                    "Created",
-                                    $"{resolvedCustomerId} · {linesSummary}")),
-                                cancellationToken);
+                            var successActivity = MessageFactory.Attachment(TeamsCardBuilder.BuildSuccessCard(
+                                created.SoNumber,
+                                "Created",
+                                $"{resolvedCustomerId} · {linesSummary}"));
+                            successActivity.Id = turnContext.Activity.ReplyToId;
+                            await turnContext.UpdateActivityAsync(successActivity, cancellationToken);
 
                             var roleForDetail = await _userMappingService.GetRoleAsync(teamsUserId, cancellationToken);
                             await turnContext.SendActivityAsync(
@@ -2192,52 +2192,41 @@ public class TeamsBot : TeamsActivityHandler
                                     cancellationToken)),
                                 cancellationToken);
                         }
-                        catch (SapODataException sapEx)
-                        {
-                            var errorCode = sapEx.IsValidationError ? "VALIDATION" : "SAP_ERROR";
-                            _logger.LogError(sapEx, "SAP error creating sales order (classified={ErrorCode})", errorCode);
-
-                            if (sapEx.IsValidationError)
-                            {
-                                var reviewLines = lineItemDtos.Select(i =>
-                                    new AISO.AiOrchestration.Functions.ConfirmCreateOrderLine(i.Material, i.OrderQty, i.Plant, i.Unit)).ToList();
-                                var saLabel = $"{salesOrg} / {distChannel} / {division}";
-                                var saKey = $"{salesOrg}|{distChannel}|{division}";
-                                var cLabel = valueObj.TryGetValue("customerLabel", StringComparison.OrdinalIgnoreCase, out var clTok)
-                                    ? clTok?.ToString() : customerId;
-
-                                await turnContext.SendActivityAsync(
-                                    MessageFactory.Attachment(TeamsCardBuilder.BuildCreateOrderStep4ReviewCard(
-                                        saLabel,
-                                        cLabel ?? "",
-                                        shipToParty,
-                                        docType,
-                                        currency,
-                                        purchaseOrderRef,
-                                        requestedDeliveryDate,
-                                        reviewLines,
-                                        saKey,
-                                        salesOrg,
-                                        distChannel,
-                                        division,
-                                        customerId,
-                                        resolvedCustomerId,
-                                        errorMessage: FormatSapErrorMessage(sapEx.Message))),
-                                    cancellationToken);
-                            }
-                            else
-                            {
-                                await turnContext.SendActivityAsync(
-                                    MessageFactory.Attachment(TeamsCardBuilder.BuildErrorCard(errorCode, FormatSapErrorMessage(sapEx.Message))),
-                                    cancellationToken);
-                            }
-                        }
                         catch (Exception ex)
                         {
-                            _logger.LogError(ex, "Unexpected error creating sales order");
-                            await turnContext.SendActivityAsync(
-                                MessageFactory.Attachment(TeamsCardBuilder.BuildErrorCard("ACTION_FAILED", ex.Message)),
-                                cancellationToken);
+                            var sapEx = ex as SapODataException;
+                            var isValidation = sapEx?.IsValidationError == true;
+                            var errorCode = isValidation ? "VALIDATION" : sapEx != null ? "SAP_ERROR" : "ACTION_FAILED";
+                            var errMsg = sapEx != null ? FormatSapErrorMessage(sapEx.Message) : ex.Message;
+
+                            _logger.LogError(ex, "Error creating sales order (classified={ErrorCode})", errorCode);
+
+                            var reviewLines = lineItemDtos.Select(i =>
+                                new AISO.AiOrchestration.Functions.ConfirmCreateOrderLine(i.Material, i.OrderQty, i.Plant, i.Unit)).ToList();
+                            var saLabel = $"{salesOrg} / {distChannel} / {division}";
+                            var saKey = $"{salesOrg}|{distChannel}|{division}";
+                            var cLabel = valueObj.TryGetValue("customerLabel", StringComparison.OrdinalIgnoreCase, out var clTok)
+                                ? clTok?.ToString() : customerId;
+
+                            var errorActivity = MessageFactory.Attachment(TeamsCardBuilder.BuildCreateOrderStep4ReviewCard(
+                                saLabel,
+                                cLabel ?? "",
+                                shipToParty,
+                                docType,
+                                currency,
+                                purchaseOrderRef,
+                                requestedDeliveryDate,
+                                reviewLines,
+                                saKey,
+                                salesOrg,
+                                distChannel,
+                                division,
+                                customerId,
+                                resolvedCustomerId,
+                                errorMessage: $"[{errorCode}] {errMsg}"));
+
+                            errorActivity.Id = turnContext.Activity.ReplyToId;
+                            await turnContext.UpdateActivityAsync(errorActivity, cancellationToken);
                         }
 
                         return;
