@@ -10,7 +10,7 @@
       "items": [
         {
           "type": "TextBlock",
-          "text": "Create sales order (Step 3 of 4) \u00e2\u20ac\u201d Line Items",
+          "text": "Create sales order (Step 3 of 4) - Line Items",
           "weight": "Bolder",
           "size": "Medium",
           "color": "Accent",
@@ -62,7 +62,7 @@
     },
     {
       "type": "TextBlock",
-      "text": "Line items \u00e2\u20ac\u201d fill at least one row before continuing",
+      "text": "Line items - fill at least one row before continuing",
       "weight": "Bolder",
       "size": "Small",
       "spacing": "Medium",
@@ -1116,7 +1116,7 @@
           "actions": [
             {
               "type": "Action.ToggleVisibility",
-              "title": "\u00e2\u02c6\u2019 Remove row",
+              "title": "- Remove row",
               "targetElements": [
                 {
                   "elementId": "row4",
@@ -1194,7 +1194,7 @@
           "actions": [
             {
               "type": "Action.ToggleVisibility",
-              "title": "\u00e2\u02c6\u2019 Remove row",
+              "title": "- Remove row",
               "targetElements": [
                 {
                   "elementId": "row5",
@@ -1272,7 +1272,7 @@
           "actions": [
             {
               "type": "Action.ToggleVisibility",
-              "title": "\u00e2\u02c6\u2019 Remove row",
+              "title": "- Remove row",
               "targetElements": [
                 {
                   "elementId": "row6",
@@ -1346,7 +1346,7 @@
           "actions": [
             {
               "type": "Action.ToggleVisibility",
-              "title": "\u00e2\u02c6\u2019 Remove row",
+              "title": "- Remove row",
               "targetElements": [
                 {
                   "elementId": "row7",
@@ -1416,7 +1416,7 @@
           "actions": [
             {
               "type": "Action.ToggleVisibility",
-              "title": "\u00e2\u02c6\u2019 Remove row",
+              "title": "- Remove row",
               "targetElements": [
                 {
                   "elementId": "row8",
@@ -1482,7 +1482,7 @@
           "actions": [
             {
               "type": "Action.ToggleVisibility",
-              "title": "\u00e2\u02c6\u2019 Remove row",
+              "title": "- Remove row",
               "targetElements": [
                 {
                   "elementId": "row9",
@@ -1544,7 +1544,7 @@
           "actions": [
             {
               "type": "Action.ToggleVisibility",
-              "title": "\u00e2\u02c6\u2019 Remove row",
+              "title": "- Remove row",
               "targetElements": [
                 {
                   "elementId": "row10",
