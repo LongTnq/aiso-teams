@@ -2222,13 +2222,13 @@ public class TeamsBot : TeamsActivityHandler
                                         division,
                                         customerId,
                                         resolvedCustomerId,
-                                        errorMessage: sapEx.Message)),
+                                        errorMessage: FormatSapErrorMessage(sapEx.Message))),
                                     cancellationToken);
                             }
                             else
                             {
                                 await turnContext.SendActivityAsync(
-                                    MessageFactory.Attachment(TeamsCardBuilder.BuildErrorCard(errorCode, sapEx.Message)),
+                                    MessageFactory.Attachment(TeamsCardBuilder.BuildErrorCard(errorCode, FormatSapErrorMessage(sapEx.Message))),
                                     cancellationToken);
                             }
                         }
@@ -4011,5 +4011,30 @@ public class TeamsBot : TeamsActivityHandler
             p => p.SoNumber,
             p => p.latest,
             StringComparer.OrdinalIgnoreCase);
+    }
+
+    private string FormatSapErrorMessage(string msg)
+    {
+        if (string.IsNullOrWhiteSpace(msg)) return msg;
+
+        // Xử lý lỗi: "Chưa có giá PR00 cho item (item:material):10 :260 , 20 :93Sales area UE00/WH"
+        if (msg.Contains("Chưa có giá PR00"))
+        {
+            var prefix = "Chưa có giá PR00 cho item (item:material):";
+            var idx = msg.IndexOf("Sales area", StringComparison.OrdinalIgnoreCase);
+            if (msg.StartsWith(prefix, StringComparison.OrdinalIgnoreCase) && idx > 0)
+            {
+                var itemsPart = msg.Substring(prefix.Length, idx - prefix.Length).Trim();
+                var suffix = msg.Substring(idx).Trim();
+
+                var items = itemsPart.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
+                                     .Select(i => $"- {i.Trim()}");
+
+                return $"**Chưa có giá PR00 cho item (item: material)**\n\n" +
+                       $"{string.Join("\n\n", items)}\n\n" +
+                       $"**{suffix}**";
+            }
+        }
+        return msg;
     }
 }
