@@ -4026,10 +4026,10 @@ public class TeamsBot : TeamsActivityHandler
             {
                 var itemsPart = msg.Substring(prefix.Length, idx - prefix.Length).Trim();
                 var suffix = msg.Substring(idx).Trim();
-                
+
                 var items = itemsPart.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
                                      .Select(i => $"- {i.Trim()}");
-                                     
+
                 return $"**Chưa có giá PR00 cho item (item: material)**\n\n" +
                        $"{string.Join("\n\n", items)}\n\n" +
                        $"**{suffix}**";
