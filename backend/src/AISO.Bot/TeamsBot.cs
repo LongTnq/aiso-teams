@@ -1278,9 +1278,14 @@ public class TeamsBot : TeamsActivityHandler
                                 comment,
                                 cancellationToken);
 
-                            await turnContext.SendActivityAsync(
-                                MessageFactory.Attachment(TeamsCardBuilder.BuildSuccessCard(updated.SoNumber, "Approved")),
-                                cancellationToken);
+                            var roleForDetail = await _userMappingService.GetRoleAsync(teamsUserId, cancellationToken);
+                            var updatedCard = MessageFactory.Attachment(await BuildSalesOrderDetailAttachmentAsync(
+                                updated,
+                                roleForDetail,
+                                linkedSapUsername,
+                                cancellationToken));
+                            updatedCard.Id = turnContext.Activity.ReplyToId;
+                            await turnContext.UpdateActivityAsync(updatedCard, cancellationToken);
                         }
                         catch (UnauthorizedAccessException authEx)
                         {
@@ -1353,9 +1358,24 @@ public class TeamsBot : TeamsActivityHandler
                                 comment,
                                 cancellationToken);
 
-                            await turnContext.SendActivityAsync(
-                                MessageFactory.Attachment(TeamsCardBuilder.BuildSuccessCard(approval.SoNumber, "ApprovalRejected")),
-                                cancellationToken);
+                            var order = await _sap.GetSalesOrderByIdAsync(salesOrderId, cancellationToken);
+                            if (order != null)
+                            {
+                                var roleForDetail = await _userMappingService.GetRoleAsync(teamsUserId, cancellationToken);
+                                var updatedCard = MessageFactory.Attachment(await BuildSalesOrderDetailAttachmentAsync(
+                                    order,
+                                    roleForDetail,
+                                    linkedSapUsername,
+                                    cancellationToken));
+                                updatedCard.Id = turnContext.Activity.ReplyToId;
+                                await turnContext.UpdateActivityAsync(updatedCard, cancellationToken);
+                            }
+                            else
+                            {
+                                await turnContext.SendActivityAsync(
+                                    MessageFactory.Attachment(TeamsCardBuilder.BuildSuccessCard(approval.SoNumber, "ApprovalRejected")),
+                                    cancellationToken);
+                            }
                         }
                         catch (UnauthorizedAccessException authEx)
                         {
