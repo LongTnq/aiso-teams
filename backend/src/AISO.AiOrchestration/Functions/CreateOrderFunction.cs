@@ -135,6 +135,8 @@ public sealed class CreateOrderFunction : IFunction
         IReadOnlyList<SapDocType> docTypes;
         try { docTypes = await _sap.GetDocTypeListAsync(ct); } catch { docTypes = Array.Empty<SapDocType>(); }
         var docTypeChoices = docTypes
+            .OrderByDescending(d => string.Equals(d.DocType, "OR", StringComparison.OrdinalIgnoreCase))
+            .ThenBy(d => d.DocType)
             .Select(d => new ConfirmCreateChoice($"{d.DocType} — {d.DocTypeName}", d.DocType))
             .ToList();
 
