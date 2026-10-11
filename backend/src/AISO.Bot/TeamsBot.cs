@@ -1,5 +1,5 @@
-
 using System.Diagnostics;
+using System.Text.RegularExpressions;
 using AISO.AiOrchestration;
 using AISO.Bot.Cards;
 using AISO.Bot.Cards.Builders;
@@ -4158,16 +4158,50 @@ public class TeamsBot : TeamsActivityHandler
             StringComparer.OrdinalIgnoreCase);
     }
 
-    private string FormatSapErrorMessage(string msg, IReadOnlyList<CreateSalesOrderItemDto>? lineItems = null, string? salesOrg = null, string? distChannel = null, string? errorCode = null)
+    internal static string FormatSapErrorMessage(
+        string msg,
+        IReadOnlyList<CreateSalesOrderItemDto>? lineItems = null,
+        string? salesOrg = null,
+        string? distChannel = null,
+        string? errorCode = null)
     {
         if (string.IsNullOrWhiteSpace(msg)) return msg;
 
+        var codePrefix = !string.IsNullOrWhiteSpace(errorCode) ? $"[{errorCode}] " : "";
+        const string indent = "\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0";
+
         // Xử lý lỗi: "Chưa có giá PR00 cho item (item:material):10 :260 , 20 :93Sales area UE00/WH"
-        if (msg.Contains("Chưa có giá PR00", StringComparison.OrdinalIgnoreCase) || msg.Contains("Missing PR00 price", StringComparison.OrdinalIgnoreCase))
+        if (msg.Contains("Chưa có giá PR00", StringComparison.OrdinalIgnoreCase) ||
+            msg.Contains("Missing PR00 price", StringComparison.OrdinalIgnoreCase))
         {
             var prefix = "Chưa có giá PR00 cho item (item:material):";
             var idx = msg.IndexOf("Sales area", StringComparison.OrdinalIgnoreCase);
-            var suffix = idx > 0 ? msg.Substring(idx).Trim() : (!string.IsNullOrWhiteSpace(salesOrg) ? $"Sales area {salesOrg}/{distChannel}" : "");
+
+            string? salesAreaText = null;
+            string? simErr = null;
+
+            if (idx >= 0)
+            {
+                var rawSuffix = msg.Substring(idx).Trim();
+                var saMatch = Regex.Match(rawSuffix, @"^Sales area\s+([^\s,]+)(?:,\s*([A-Za-z]{3}))?\s*(.*)$", RegexOptions.IgnoreCase);
+                if (saMatch.Success)
+                {
+                    salesAreaText = $"Sales area {saMatch.Groups[1].Value.Trim()}";
+                    var trailing = saMatch.Groups[3].Value.Trim();
+                    if (!string.IsNullOrWhiteSpace(trailing))
+                    {
+                        simErr = trailing;
+                    }
+                }
+                else
+                {
+                    salesAreaText = rawSuffix;
+                }
+            }
+            else if (!string.IsNullOrWhiteSpace(salesOrg) && !string.IsNullOrWhiteSpace(distChannel))
+            {
+                salesAreaText = $"Sales area {salesOrg}/{distChannel}";
+            }
 
             var reportedItems = new List<string>();
             if (msg.StartsWith(prefix, StringComparison.OrdinalIgnoreCase) && idx > 0)
@@ -4179,24 +4213,61 @@ public class TeamsBot : TeamsActivityHandler
                                          .ToList();
             }
 
-            // Fallback: If SAP returned a truncated list (e.g. only 2 items) while more items were submitted in the order
-            if (lineItems != null && lineItems.Count > reportedItems.Count)
+            // Case 1: SAP returned an underlying simulate error (e.g. "Material JSH02493-Z02-A0 is not defined for sales")
+            if (!string.IsNullOrWhiteSpace(simErr))
             {
-                reportedItems = lineItems.Select((item, index) => $"{(index + 1) * 10} :{item.Material}").ToList();
+                var errorSentences = simErr.Split(new[] { '\n', ';' }, StringSplitOptions.RemoveEmptyEntries)
+                                           .Select(s => s.Trim())
+                                           .Where(s => !string.IsNullOrWhiteSpace(s))
+                                           .ToList();
+
+                var faultyLines = new List<string>();
+
+                if (lineItems != null && lineItems.Count > 0)
+                {
+                    for (int i = 0; i < lineItems.Count; i++)
+                    {
+                        var item = lineItems[i];
+                        var lineNo = (i + 1) * 10;
+                        var mat = item.Material?.Trim() ?? "";
+
+                        foreach (var sentence in errorSentences)
+                        {
+                            if (!string.IsNullOrWhiteSpace(mat) && sentence.Contains(mat, StringComparison.OrdinalIgnoreCase))
+                            {
+                                faultyLines.Add(sentence);
+                            }
+                            else if (Regex.IsMatch(sentence, $@"\b(item|line)\s*{lineNo}\b", RegexOptions.IgnoreCase))
+                            {
+                                faultyLines.Add(sentence);
+                            }
+                        }
+                    }
+                }
+
+                if (faultyLines.Count == 0)
+                {
+                    faultyLines.AddRange(errorSentences);
+                }
+
+                var uniqueFaultyLines = faultyLines.Distinct().ToList();
+                var itemsFormatted = string.Join("  \n", uniqueFaultyLines.Select(line => $"{indent}{line.Trim()}"));
+
+                return $"**{codePrefix}Item validation error**\n\n" +
+                       $"{itemsFormatted}\n\n" +
+                       (!string.IsNullOrWhiteSpace(salesAreaText) ? $"**{salesAreaText}**" : "");
             }
 
+            // Case 2: Genuine missing PR00 condition records - show ONLY the items that failed
             if (reportedItems.Count > 0)
             {
-                var codePrefix = !string.IsNullOrWhiteSpace(errorCode) ? $"[{errorCode}] " : "";
-                var indent = "\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0";
                 var itemsFormatted = string.Join("  \n", reportedItems.Select(i => $"{indent}{i.Trim()}"));
                 return $"**{codePrefix}Missing PR00 price for item (item: material)**\n\n" +
                        $"{itemsFormatted}\n\n" +
-                       (!string.IsNullOrWhiteSpace(suffix) ? $"**{suffix}**" : "");
+                       (!string.IsNullOrWhiteSpace(salesAreaText) ? $"**{salesAreaText}**" : "");
             }
         }
 
-        var prefixCode = !string.IsNullOrWhiteSpace(errorCode) ? $"[{errorCode}] " : "";
-        return $"{prefixCode}{msg}";
+        return $"{codePrefix}{msg}";
     }
 }
