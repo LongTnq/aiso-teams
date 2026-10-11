@@ -1814,13 +1814,10 @@ public class TeamsBot : TeamsActivityHandler
                             return;
                         }
 
-                        // Validate DocType (required).
+                        // Validate DocType (default to OR if missing).
                         if (string.IsNullOrWhiteSpace(docType))
                         {
-                            await turnContext.SendActivityAsync(
-                                MessageFactory.Attachment(TeamsCardBuilder.BuildErrorCard("VALIDATION", "Order type is required.")),
-                                cancellationToken);
-                            return;
+                            docType = "OR";
                         }
 
                         // Validate customer.

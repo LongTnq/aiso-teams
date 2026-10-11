@@ -445,8 +445,15 @@ internal static class TeamsCardBuilder
         string? currency = null,
         string? purchaseOrderRef = null,
         string? requestedDeliveryDate = null,
-        string? shipToParty = null) =>
-        CardTemplateFileLoader.BuildAdaptiveCardAttachment(
+        string? shipToParty = null)
+    {
+        var sortedDocTypes = docTypes?
+            .OrderByDescending(d => string.Equals(d.DocType, "OR", StringComparison.OrdinalIgnoreCase))
+            .ThenBy(d => d.DocType)
+            .Select(d => new { title = $"{d.DocType} — {d.DocTypeName}", value = d.DocType })
+            .ToList();
+
+        return CardTemplateFileLoader.BuildAdaptiveCardAttachment(
             "create-so-step2.json",
             new
             {
@@ -456,8 +463,8 @@ internal static class TeamsCardBuilder
                 distChannel,
                 division,
                 customerChoices,
-                docTypeChoices = docTypes?.Select(d => new { title = $"{d.DocType} — {d.DocTypeName}", value = d.DocType }).ToList(),
-                selectedDocType = selectedDocType ?? "",
+                docTypeChoices = sortedDocTypes,
+                selectedDocType = !string.IsNullOrWhiteSpace(selectedDocType) ? selectedDocType : "OR",
                 currency = currency ?? (salesOrg?.StartsWith("TV", StringComparison.OrdinalIgnoreCase) == true ? "VND" : "USD"),
                 purchaseOrderRef = purchaseOrderRef ?? "",
                 requestedDeliveryDate = requestedDeliveryDate ?? "",
@@ -465,6 +472,7 @@ internal static class TeamsCardBuilder
                 hasShipToParty = !string.IsNullOrWhiteSpace(shipToParty) ? "true" : "false",
                 customer = ""
             });
+    }
 
     public static Attachment BuildCreateOrderStep3Card(
         string customerLabel,
