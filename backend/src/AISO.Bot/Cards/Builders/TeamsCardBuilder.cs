@@ -458,7 +458,7 @@ internal static class TeamsCardBuilder
                 customerChoices,
                 docTypeChoices = docTypes?.Select(d => new { title = $"{d.DocType} — {d.DocTypeName}", value = d.DocType }).ToList(),
                 selectedDocType = selectedDocType ?? "",
-                currency = currency ?? "USD",
+                currency = currency ?? (salesOrg?.StartsWith("TV", StringComparison.OrdinalIgnoreCase) == true ? "VND" : "USD"),
                 purchaseOrderRef = purchaseOrderRef ?? "",
                 requestedDeliveryDate = requestedDeliveryDate ?? "",
                 shipToParty = shipToParty ?? "",
