@@ -2259,7 +2259,9 @@ public class TeamsBot : TeamsActivityHandler
                             var sapEx = ex as SapODataException;
                             var isValidation = sapEx?.IsValidationError == true;
                             var errorCode = isValidation ? "VALIDATION" : sapEx != null ? "SAP_ERROR" : "ACTION_FAILED";
-                            var errMsg = sapEx != null ? FormatSapErrorMessage(sapEx.Message, lineItemDtos, salesOrg, distChannel) : ex.Message;
+                            var errMsg = sapEx != null
+                                ? FormatSapErrorMessage(sapEx.Message, lineItemDtos, salesOrg, distChannel, errorCode)
+                                : $"[{errorCode}] {ex.Message}";
 
                             _logger.LogError(ex, "Error creating sales order (classified={ErrorCode})", errorCode);
 
@@ -2285,7 +2287,7 @@ public class TeamsBot : TeamsActivityHandler
                                 division,
                                 customerId,
                                 resolvedCustomerId,
-                                errorMessage: $"[{errorCode}] {errMsg}"));
+                                errorMessage: errMsg));
 
                             errorActivity.Id = turnContext.Activity.ReplyToId;
                             await turnContext.UpdateActivityAsync(errorActivity, cancellationToken);
@@ -4064,7 +4066,7 @@ public class TeamsBot : TeamsActivityHandler
             StringComparer.OrdinalIgnoreCase);
     }
 
-    private string FormatSapErrorMessage(string msg, IReadOnlyList<CreateSalesOrderItemDto>? lineItems = null, string? salesOrg = null, string? distChannel = null)
+    private string FormatSapErrorMessage(string msg, IReadOnlyList<CreateSalesOrderItemDto>? lineItems = null, string? salesOrg = null, string? distChannel = null, string? errorCode = null)
     {
         if (string.IsNullOrWhiteSpace(msg)) return msg;
 
@@ -4093,11 +4095,16 @@ public class TeamsBot : TeamsActivityHandler
 
             if (reportedItems.Count > 0)
             {
-                return $"Missing PR00 price for item (item: material)\n\n" +
-                       $"{string.Join("\n\n", reportedItems)}" +
-                       (!string.IsNullOrWhiteSpace(suffix) ? $"\n\n{suffix}" : "");
+                var codePrefix = !string.IsNullOrWhiteSpace(errorCode) ? $"[{errorCode}] " : "";
+                var indent = "\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0";
+                var itemsFormatted = string.Join("  \n", reportedItems.Select(i => $"{indent}{i.Trim()}"));
+                return $"**{codePrefix}Missing PR00 price for item (item: material)**\n\n" +
+                       $"{itemsFormatted}\n\n" +
+                       (!string.IsNullOrWhiteSpace(suffix) ? $"**{suffix}**" : "");
             }
         }
-        return msg;
+
+        var prefixCode = !string.IsNullOrWhiteSpace(errorCode) ? $"[{errorCode}] " : "";
+        return $"{prefixCode}{msg}";
     }
 }
