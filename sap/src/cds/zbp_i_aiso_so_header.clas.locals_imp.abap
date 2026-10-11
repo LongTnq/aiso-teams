@@ -1333,7 +1333,7 @@ METHOD cleanup.
          lcl_buffer=>gt_create_items.      " ← THÊM
 ENDMETHOD.
 
-   METHOD adjust_numbers.
+     METHOD adjust_numbers.
     DATA: ls_header_in       TYPE bapisdhd1,
           ls_header_inx      TYPE bapisdhd1x,
           lt_partners        TYPE TABLE OF bapiparnr,
@@ -1347,6 +1347,11 @@ ENDMETHOD.
           lv_timestamp       TYPE c LENGTH 14,
           lv_audit_id        TYPE sysuuid_c32.
 
+    " --- Defaults (currency theo khách, unit theo material) ---
+    DATA: lv_currency TYPE waers,
+          lv_unit     TYPE meins,
+          lv_matnr    TYPE matnr.
+
     " --- Pricing check (BAPI_SALESORDER_SIMULATE) ---
     DATA: ls_sim_header   TYPE bapisdhead,
           lt_sim_items    TYPE TABLE OF bapiitemin,
@@ -1356,7 +1361,8 @@ ENDMETHOD.
           lt_sim_msg      TYPE TABLE OF bapiret2,
           ls_sim_return   TYPE bapireturn,
           lv_no_price     TYPE abap_bool,
-          lv_bad_list     TYPE string.
+          lv_bad_list     TYPE string,
+          lv_sim_err      TYPE string.
 
     LOOP AT lcl_buffer=>gt_create_header INTO DATA(ls_hdr).
 
@@ -1402,13 +1408,31 @@ ENDMETHOD.
       ENDIF.
 
       " ═══════════════════════════════════════════════
+      " Customer (khai báo sớm vì Currency mặc định cần dùng)
+      " ═══════════════════════════════════════════════
+      DATA(lv_customer_alpha) = |{ ls_hdr-customer ALPHA = IN }|.
+
+      " ═══════════════════════════════════════════════
+      " Currency: user không gửi -> lấy tiền tệ mặc định của khách (KNVV-WAERS)
+      " ═══════════════════════════════════════════════
+      lv_currency = ls_hdr-currency.
+      IF lv_currency IS INITIAL.
+        SELECT SINGLE waers FROM knvv
+          WHERE kunnr = @lv_customer_alpha
+            AND vkorg = @ls_hdr-sales_org
+            AND vtweg = @ls_hdr-dist_channel
+            AND spart = @ls_hdr-division
+          INTO @lv_currency.
+      ENDIF.
+
+      " ═══════════════════════════════════════════════
       " Build header
       " ═══════════════════════════════════════════════
       ls_header_in-doc_type   = ls_hdr-doc_type.
       ls_header_in-sales_org  = ls_hdr-sales_org.
       ls_header_in-distr_chan = ls_hdr-dist_channel.
       ls_header_in-division   = ls_hdr-division.
-      ls_header_in-currency   = ls_hdr-currency.
+      ls_header_in-currency   = lv_currency.
       ls_header_in-req_date_h = ls_hdr-req_delivery_date.
 
       ls_header_inx-doc_type   = 'X'.
@@ -1422,8 +1446,6 @@ ENDMETHOD.
       " ═══════════════════════════════════════════════
       " BƯỚC 1: Sold-to (AG) + Ship-to (WE)
       " ═══════════════════════════════════════════════
-      DATA(lv_customer_alpha) = |{ ls_hdr-customer ALPHA = IN }|.
-
       DATA(lv_ship_to) = ls_hdr-ship_to.
 
       IF lv_ship_to IS INITIAL.
@@ -1453,11 +1475,21 @@ ENDMETHOD.
 
         lv_item_no = lv_item_no + 10.
 
+        lv_matnr = |{ ls_itm-material ALPHA = IN }|.
+
+        " Unit: user không gửi -> lấy đơn vị cơ bản của material (MARA-MEINS)
+        lv_unit = ls_itm-unit.
+        IF lv_unit IS INITIAL.
+          SELECT SINGLE meins FROM mara
+            WHERE matnr = @lv_matnr
+            INTO @lv_unit.
+        ENDIF.
+
         APPEND VALUE #( itm_number = lv_item_no
-                        material   = |{ ls_itm-material ALPHA = IN }|
+                        material   = lv_matnr
                         plant      = ls_itm-plant
                         target_qty = ls_itm-order_qty
-                        target_qu  = ls_itm-unit ) TO lt_items_in.
+                        target_qu  = lv_unit ) TO lt_items_in.
 
         APPEND VALUE #( itm_number = lv_item_no
                         material   = 'X'
@@ -1483,7 +1515,7 @@ ENDMETHOD.
       " ═══════════════════════════════════════════════
       CLEAR: ls_sim_header, lt_sim_items, lt_sim_partners,
              lt_sim_out, lt_sim_cond, lt_sim_msg, ls_sim_return,
-             lv_no_price, lv_bad_list.
+             lv_no_price, lv_bad_list, lv_sim_err.
 
       ls_sim_header   = CORRESPONDING #( ls_header_in ).
       lt_sim_items    = CORRESPONDING #( lt_items_in ).
@@ -1516,6 +1548,15 @@ ENDMETHOD.
       ENDLOOP.
 
       IF lv_no_price = abap_true.
+        " Lấy lý do thật từ simulate (message lỗi đầu tiên) để dễ debug
+        LOOP AT lt_sim_msg INTO DATA(ls_sm) WHERE type CA 'EA'.
+          lv_sim_err = ls_sm-message.
+          EXIT.
+        ENDLOOP.
+        IF lv_sim_err IS INITIAL AND ls_sim_return-type CA 'EA'.
+          lv_sim_err = ls_sim_return-message.
+        ENDIF.
+
         APPEND VALUE #( %pid        = ls_hdr-cid
                         %fail-cause = if_abap_behv=>cause-unspecific )
                TO failed-salesorder.
@@ -1527,7 +1568,9 @@ ENDMETHOD.
                           severity = if_abap_behv_message=>severity-error
                           v1       = |Chưa có giá PR00 cho item (item:material):|
                           v2       = lv_bad_list
-                          v3       = |Sales area { ls_hdr-sales_org }/{ ls_hdr-dist_channel }| ) )
+                          v3       = |Sales area { ls_hdr-sales_org }/{ ls_hdr-dist_channel }, { lv_currency }|
+                          v4       = substring( val = lv_sim_err
+                                                len = nmin( val1 = strlen( lv_sim_err ) val2 = 50 ) ) ) )
                TO reported-salesorder.
         CONTINUE.  " skip header này, không gọi CREATEFROMDAT2
       ENDIF.
@@ -1604,5 +1647,6 @@ ENDMETHOD.
 
     ENDLOOP.
   ENDMETHOD.
+
 
 ENDCLASS.
