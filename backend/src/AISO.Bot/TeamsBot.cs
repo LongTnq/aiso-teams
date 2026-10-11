@@ -38,6 +38,7 @@ public class TeamsBot : TeamsActivityHandler
     private readonly Microsoft.Extensions.Configuration.IConfiguration _config;
     private readonly IUserScopeLookup _scopeLookup;
     private readonly AISO.Domain.Notifications.IEmailService _emailService;
+    private readonly ProactiveMessagingService? _proactiveMessaging;
 
     public TeamsBot(
         IFunctionDispatcher dispatcher,
@@ -52,7 +53,8 @@ public class TeamsBot : TeamsActivityHandler
         IBotUserAdminService botUserAdmin,
         Microsoft.Extensions.Configuration.IConfiguration config,
         IUserScopeLookup scopeLookup,
-        AISO.Domain.Notifications.IEmailService emailService)
+        AISO.Domain.Notifications.IEmailService emailService,
+        ProactiveMessagingService? proactiveMessaging = null)
     {
         _dispatcher = dispatcher;
         _sap = sap;
@@ -67,6 +69,7 @@ public class TeamsBot : TeamsActivityHandler
         _config = config;
         _scopeLookup = scopeLookup;
         _emailService = emailService;
+        _proactiveMessaging = proactiveMessaging;
     }
 
     public override async Task OnTurnAsync(ITurnContext turnContext, CancellationToken cancellationToken = default)
@@ -711,6 +714,43 @@ public class TeamsBot : TeamsActivityHandler
                                     comment,
                                     cancellationToken);
 
+                                if (_proactiveMessaging != null)
+                                {
+                                    try
+                                    {
+                                        var managerTeamsUserIds = await _userMappingService.GetManagerTeamsUserIdsForSalesOrgAsync(
+                                            order.SalesOrg,
+                                            cancellationToken);
+
+                                        if (managerTeamsUserIds.Count > 0)
+                                        {
+                                            var netValueFormatted = $"{order.NetValue:N0} {order.Currency}".Trim();
+                                            var notificationCard = TeamsCardBuilder.BuildReleaseRequestNotificationCard(
+                                                salesOrderNumber: order.SoNumber,
+                                                requestedBy: linkedSapUsername,
+                                                salesOrg: order.SalesOrg,
+                                                formattedNetValue: netValueFormatted,
+                                                comment: comment,
+                                                requestedAt: request.RequestedAt);
+
+                                            foreach (var managerTeamsId in managerTeamsUserIds)
+                                            {
+                                                if (string.Equals(managerTeamsId, teamsUserId, StringComparison.OrdinalIgnoreCase))
+                                                    continue;
+
+                                                await _proactiveMessaging.SendCardByTeamsUserAsync(
+                                                    managerTeamsId,
+                                                    notificationCard,
+                                                    cancellationToken);
+                                            }
+                                        }
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        _logger.LogWarning(ex, "Failed to send proactive release request notification to managers for SO {SoNumber}", order.SoNumber);
+                                    }
+                                }
+
                                 await turnContext.SendActivityAsync(
                                     MessageFactory.Attachment(
                                         TeamsCardBuilder.BuildSuccessCard(request.SoNumber, "ReleaseRequested")),
@@ -750,6 +790,21 @@ public class TeamsBot : TeamsActivityHandler
                                     isAdmin,
                                     comment,
                                     cancellationToken);
+
+                                if (_proactiveMessaging != null && !string.IsNullOrWhiteSpace(pending.RequestedBySapUser))
+                                {
+                                    try
+                                    {
+                                        await _proactiveMessaging.SendMessageBySapUserAsync(
+                                            pending.RequestedBySapUser,
+                                            $"✅ Sales order {pending.SoNumber} has been approved and released by {linkedSapUsername}.",
+                                            cancellationToken);
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        _logger.LogWarning(ex, "Failed to send proactive approval notification for SO {SoNumber}", pending.SoNumber);
+                                    }
+                                }
 
                                 await turnContext.SendActivityAsync(
                                     MessageFactory.Attachment(TeamsCardBuilder.BuildSuccessCard(updated.SoNumber, "Approved")),
@@ -1278,6 +1333,21 @@ public class TeamsBot : TeamsActivityHandler
                                 comment,
                                 cancellationToken);
 
+                            if (_proactiveMessaging != null && !string.IsNullOrWhiteSpace(pending.RequestedBySapUser))
+                            {
+                                try
+                                {
+                                    await _proactiveMessaging.SendMessageBySapUserAsync(
+                                        pending.RequestedBySapUser,
+                                        $"✅ Sales order {pending.SoNumber} has been approved and released by {linkedSapUsername}.",
+                                        cancellationToken);
+                                }
+                                catch (Exception ex)
+                                {
+                                    _logger.LogWarning(ex, "Failed to send proactive approval notification for SO {SoNumber}", pending.SoNumber);
+                                }
+                            }
+
                             var roleForDetail = await _userMappingService.GetRoleAsync(teamsUserId, cancellationToken);
                             var updatedCard = MessageFactory.Attachment(await BuildSalesOrderDetailAttachmentAsync(
                                 updated,
@@ -1357,6 +1427,22 @@ public class TeamsBot : TeamsActivityHandler
                                 isAdmin: role == UserRole.Admin,
                                 comment,
                                 cancellationToken);
+
+                            if (_proactiveMessaging != null && !string.IsNullOrWhiteSpace(approval.RequestedBySapUser))
+                            {
+                                try
+                                {
+                                    var rejectReason = string.IsNullOrWhiteSpace(comment) ? "No reason provided" : comment.Trim();
+                                    await _proactiveMessaging.SendMessageBySapUserAsync(
+                                        approval.RequestedBySapUser,
+                                        $"❌ Release request for sales order {salesOrderId} was declined by {linkedSapUsername}: {rejectReason}",
+                                        cancellationToken);
+                                }
+                                catch (Exception ex)
+                                {
+                                    _logger.LogWarning(ex, "Failed to send proactive rejection notification for SO {SoNumber}", salesOrderId);
+                                }
+                            }
 
                             var order = await _sap.GetSalesOrderByIdAsync(salesOrderId, cancellationToken);
                             if (order != null)

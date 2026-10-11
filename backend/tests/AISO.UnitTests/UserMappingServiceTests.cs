@@ -177,4 +177,35 @@ public class UserMappingServiceTests
         Assert.Empty(ctx.UserMappings);
         Assert.Null(await service.GetSapUsernameAsync("teams-1"));
     }
+
+    [Fact]
+    public async Task GetManagerTeamsUserIdsForSalesOrg_ReturnsScopedManagersAndAdmins()
+    {
+        using var ctx = NewContext();
+        var service = new UserMappingService(ctx);
+        await service.MapUserAsync("mgr-tv01", "TV01 Manager", "DEV-001", role: UserRole.Manager, salesOrg: "TV01");
+        await service.MapUserAsync("mgr-fu24", "FU24 Manager", "DEV-002", role: UserRole.Manager, salesOrg: "FU24");
+        await service.MapUserAsync("admin-1", "Admin Global", "DEV-003", role: UserRole.Admin, salesOrg: null);
+        await service.MapUserAsync("emp-1", "Regular Employee", "DEV-004", role: UserRole.Employee, salesOrg: "TV01");
+
+        var tv01Managers = await service.GetManagerTeamsUserIdsForSalesOrgAsync("TV01");
+        Assert.Contains("mgr-tv01", tv01Managers);
+        Assert.Contains("admin-1", tv01Managers);
+        Assert.DoesNotContain("mgr-fu24", tv01Managers);
+        Assert.DoesNotContain("emp-1", tv01Managers);
+    }
+
+    [Fact]
+    public async Task GetManagerTeamsUserIdsForSalesOrg_WhenNoOrgMatch_FallsBackToAllManagers()
+    {
+        using var ctx = NewContext();
+        var service = new UserMappingService(ctx);
+        await service.MapUserAsync("mgr-fu24", "FU24 Manager", "DEV-002", role: UserRole.Manager, salesOrg: "FU24");
+        await service.MapUserAsync("emp-1", "Regular Employee", "DEV-004", role: UserRole.Employee, salesOrg: "TV01");
+
+        // Requesting for TV01 when only FU24 manager exists -> fallback returns FU24 manager
+        var managers = await service.GetManagerTeamsUserIdsForSalesOrgAsync("TV01");
+        Assert.Contains("mgr-fu24", managers);
+        Assert.DoesNotContain("emp-1", managers);
+    }
 }

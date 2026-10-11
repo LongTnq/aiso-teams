@@ -325,6 +325,33 @@ public class UserMappingService
         return mapping?.TeamsUserId;
     }
 
+    /// <summary>
+    /// Returns TeamsUserIds of managers/admins eligible to receive approval notifications for a sales order in the given sales org.
+    /// </summary>
+    public async Task<IReadOnlyList<string>> GetManagerTeamsUserIdsForSalesOrgAsync(string? salesOrg, CancellationToken cancellationToken = default)
+    {
+        var normOrg = string.IsNullOrWhiteSpace(salesOrg) ? null : salesOrg.Trim().ToUpperInvariant();
+        var mappings = await _dbContext.UserMappings
+            .AsNoTracking()
+            .Where(u => (u.Role == UserRole.Manager || u.Role == UserRole.Admin)
+                        && (normOrg == null || u.SalesOrg == null || u.SalesOrg == normOrg))
+            .ToListAsync(cancellationToken);
+
+        if (mappings.Count == 0 && normOrg != null)
+        {
+            mappings = await _dbContext.UserMappings
+                .AsNoTracking()
+                .Where(u => u.Role == UserRole.Manager || u.Role == UserRole.Admin)
+                .ToListAsync(cancellationToken);
+        }
+
+        return mappings
+            .Select(u => u.TeamsUserId)
+            .Where(id => !string.IsNullOrWhiteSpace(id))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+    }
+
     public static string NormalizeEmail(string email) => email.Trim().ToLowerInvariant();
 
     private static string? NormalizeSalesOrg(string? salesOrg) =>

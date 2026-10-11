@@ -716,6 +716,25 @@ internal static class TeamsCardBuilder
     public static Attachment BuildConfirmRejectApprovalCard(string salesOrderNumber) =>
         CardTemplateFileLoader.BuildAdaptiveCardAttachment("confirm-reject-approval.json", new { salesOrderNumber });
 
+    public static Attachment BuildReleaseRequestNotificationCard(
+        string salesOrderNumber,
+        string requestedBy,
+        string salesOrg,
+        string formattedNetValue,
+        string? comment,
+        DateTimeOffset requestedAt) =>
+        CardTemplateFileLoader.BuildAdaptiveCardAttachment(
+            "release-request-notification.json",
+            new
+            {
+                salesOrderNumber,
+                requestedBy,
+                salesOrg = string.IsNullOrWhiteSpace(salesOrg) ? "—" : salesOrg,
+                formattedNetValue = string.IsNullOrWhiteSpace(formattedNetValue) ? "—" : formattedNetValue,
+                comment = comment ?? string.Empty,
+                requestedAt = requestedAt.ToString("dd MMM yyyy, HH:mm 'UTC'")
+            });
+
     public static Attachment BuildListDelegationsCard(IReadOnlyList<DelegationItem> delegations) =>
         CardTemplateFileLoader.BuildAdaptiveCardAttachment("list-delegations.json", new { delegations });
 

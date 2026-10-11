@@ -101,6 +101,30 @@ public class PendingApprovalsCardTests
         Assert.Contains("0000000001", json);
     }
 
+    [Fact]
+    public void BuildReleaseRequestNotificationCard_RendersDetailsAndActionButtons()
+    {
+        var requestedAt = new DateTimeOffset(2026, 10, 12, 1, 0, 0, TimeSpan.Zero);
+        var attachment = TeamsCardBuilder.BuildReleaseRequestNotificationCard(
+            salesOrderNumber: "0000013771",
+            requestedBy: "DEV-244",
+            salesOrg: "TV01",
+            formattedNetValue: "780,000 VND",
+            comment: "Urgent order for project",
+            requestedAt: requestedAt);
+
+        var json = JsonConvert.SerializeObject(attachment.Content);
+        Assert.Contains("Release approval requested", json);
+        Assert.Contains("0000013771", json);
+        Assert.Contains("DEV-244", json);
+        Assert.Contains("TV01", json);
+        Assert.Contains("780,000 VND", json);
+        Assert.Contains("Urgent order for project", json);
+        Assert.Contains("view_details", json);
+        Assert.Contains("approve_so", json);
+        Assert.Contains("reject_approval", json);
+    }
+
     private static OrderApprovalRequest Approval(
         string soNumber,
         string requestedBy,

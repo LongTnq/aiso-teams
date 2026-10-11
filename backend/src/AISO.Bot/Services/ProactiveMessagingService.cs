@@ -40,6 +40,16 @@ public class ProactiveMessagingService
 
     public async Task<bool> SendMessageByTeamsUserAsync(string teamsUserId, string message, CancellationToken cancellationToken = default)
     {
+        return await SendActivityByTeamsUserAsync(teamsUserId, MessageFactory.Text(message), cancellationToken);
+    }
+
+    public async Task<bool> SendCardByTeamsUserAsync(string teamsUserId, Attachment attachment, CancellationToken cancellationToken = default)
+    {
+        return await SendActivityByTeamsUserAsync(teamsUserId, MessageFactory.Attachment(attachment), cancellationToken);
+    }
+
+    public async Task<bool> SendActivityByTeamsUserAsync(string teamsUserId, IActivity activity, CancellationToken cancellationToken = default)
+    {
         var referenceJson = await _userMappingService.GetConversationReferenceAsync(teamsUserId, cancellationToken);
         if (string.IsNullOrEmpty(referenceJson))
         {
@@ -56,7 +66,7 @@ public class ProactiveMessagingService
             reference,
             async (turnContext, ct) =>
             {
-                await turnContext.SendActivityAsync(MessageFactory.Text(message), ct);
+                await turnContext.SendActivityAsync(activity, ct);
             },
             cancellationToken);
 
