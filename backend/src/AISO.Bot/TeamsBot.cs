@@ -714,42 +714,13 @@ public class TeamsBot : TeamsActivityHandler
                                     comment,
                                     cancellationToken);
 
-                                if (_proactiveMessaging != null)
-                                {
-                                    try
-                                    {
-                                        var managerTeamsUserIds = await _userMappingService.GetManagerTeamsUserIdsForSalesOrgAsync(
-                                            order.SalesOrg,
-                                            cancellationToken);
-
-                                        if (managerTeamsUserIds.Count > 0)
-                                        {
-                                            var netValueFormatted = $"{order.NetValue:N0} {order.Currency}".Trim();
-                                            var notificationCard = TeamsCardBuilder.BuildReleaseRequestNotificationCard(
-                                                salesOrderNumber: order.SoNumber,
-                                                requestedBy: linkedSapUsername,
-                                                salesOrg: order.SalesOrg,
-                                                formattedNetValue: netValueFormatted,
-                                                comment: comment,
-                                                requestedAt: request.RequestedAt);
-
-                                            foreach (var managerTeamsId in managerTeamsUserIds)
-                                            {
-                                                if (string.Equals(managerTeamsId, teamsUserId, StringComparison.OrdinalIgnoreCase))
-                                                    continue;
-
-                                                await _proactiveMessaging.SendCardByTeamsUserAsync(
-                                                    managerTeamsId,
-                                                    notificationCard,
-                                                    cancellationToken);
-                                            }
-                                        }
-                                    }
-                                    catch (Exception ex)
-                                    {
-                                        _logger.LogWarning(ex, "Failed to send proactive release request notification to managers for SO {SoNumber}", order.SoNumber);
-                                    }
-                                }
+                                await NotifyManagersOnReleaseRequestAsync(
+                                    order,
+                                    request,
+                                    linkedSapUsername,
+                                    teamsUserId,
+                                    comment,
+                                    cancellationToken);
 
                                 await turnContext.SendActivityAsync(
                                     MessageFactory.Attachment(
@@ -1098,6 +1069,14 @@ public class TeamsBot : TeamsActivityHandler
                                 order.SoNumber,
                                 linkedSapUsername,
                                 order.SalesOrg,
+                                comment,
+                                cancellationToken);
+
+                            await NotifyManagersOnReleaseRequestAsync(
+                                order,
+                                request,
+                                linkedSapUsername,
+                                teamsUserId,
                                 comment,
                                 cancellationToken);
 
@@ -4156,6 +4135,59 @@ public class TeamsBot : TeamsActivityHandler
             p => p.SoNumber,
             p => p.latest,
             StringComparer.OrdinalIgnoreCase);
+    }
+
+    private async Task NotifyManagersOnReleaseRequestAsync(
+        Domain.SalesOrders.SalesOrder order,
+        OrderApprovalRequest request,
+        string requestedBySapUsername,
+        string requestingTeamsUserId,
+        string? comment,
+        CancellationToken cancellationToken)
+    {
+        if (_proactiveMessaging == null)
+            return;
+
+        try
+        {
+            var managerTeamsUserIds = await _userMappingService.GetManagerTeamsUserIdsForSalesOrgAsync(
+                order.SalesOrg,
+                cancellationToken);
+
+            if (managerTeamsUserIds.Count > 0)
+            {
+                var netValueFormatted = $"{order.NetValue:N0} {order.Currency}".Trim();
+                var notificationCard = TeamsCardBuilder.BuildReleaseRequestNotificationCard(
+                    salesOrderNumber: order.SoNumber,
+                    requestedBy: requestedBySapUsername,
+                    salesOrg: order.SalesOrg,
+                    formattedNetValue: netValueFormatted,
+                    comment: comment,
+                    requestedAt: request.RequestedAt);
+
+                foreach (var managerTeamsId in managerTeamsUserIds)
+                {
+                    if (string.Equals(managerTeamsId, requestingTeamsUserId, StringComparison.OrdinalIgnoreCase))
+                        continue;
+
+                    await _proactiveMessaging.SendCardByTeamsUserAsync(
+                        managerTeamsId,
+                        notificationCard,
+                        cancellationToken);
+                }
+            }
+            else
+            {
+                _logger.LogInformation(
+                    "No manager Teams users found for sales org {SalesOrg} to notify for SO {SoNumber}",
+                    order.SalesOrg,
+                    order.SoNumber);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to send proactive release request notification to managers for SO {SoNumber}", order.SoNumber);
+        }
     }
 
     internal static string FormatSapErrorMessage(
