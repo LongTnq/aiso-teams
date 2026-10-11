@@ -26,7 +26,6 @@
         {
           "type": "TextBlock",
           "text": "${errorMessage}",
-          "weight": "Bolder",
           "color": "Attention",
           "wrap": true
         }
