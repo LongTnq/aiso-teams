@@ -1800,16 +1800,23 @@ public class TeamsBot : TeamsActivityHandler
 
                             // Lấy giá trị giao với danh sách PricedMaterial
                             var pricedMaterials = await _sap.GetPricedMaterialsAsync(salesOrg, distChannel, validatedCustomerKey, top: 200, ct: cancellationToken);
-                            var validCurrency = string.IsNullOrWhiteSpace(currency) ? "USD" : currency;
+                            var validCurrency = string.IsNullOrWhiteSpace(currency)
+                                ? (salesOrg?.StartsWith("TV", StringComparison.OrdinalIgnoreCase) == true ? "VND" : "USD")
+                                : currency;
 
                             var pricedMaterialSet = pricedMaterials
-                                .Where(p => string.IsNullOrWhiteSpace(p.Currency) || string.Equals(p.Currency, validCurrency, StringComparison.OrdinalIgnoreCase))
+                                .Where(p => !string.IsNullOrWhiteSpace(p.Currency) && (string.IsNullOrWhiteSpace(validCurrency) || string.Equals(p.Currency, validCurrency, StringComparison.OrdinalIgnoreCase)))
                                 .Select(p => p.Material.TrimStart('0'))
                                 .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
-                            // TEMPORARY FIX: Do not filter materials because PricedMaterial is returning items 
-                            // not present in ValidMaterialSales for UE00/WH (e.g. BOTL1009), causing empty dropdowns.
-                            // materials = materials.Where(m => pricedMaterialSet.Contains(m.Material.TrimStart('0'))).ToList();
+                            if (pricedMaterialSet.Count > 0)
+                            {
+                                var filtered = materials.Where(m => pricedMaterialSet.Contains(m.Material.TrimStart('0'))).ToList();
+                                if (filtered.Count > 0)
+                                {
+                                    materials = filtered;
+                                }
+                            }
                         }
                         catch
                         {
@@ -2165,20 +2172,22 @@ public class TeamsBot : TeamsActivityHandler
                             try
                             {
                                 var pricedMaterials = await _sap.GetPricedMaterialsAsync(salesOrg, distChannel, resolvedCustomerId, top: 500, ct: cancellationToken);
-                                var validCurrency = string.IsNullOrWhiteSpace(currency) ? "USD" : currency;
+                                var validCurrency = string.IsNullOrWhiteSpace(currency)
+                                    ? (salesOrg?.StartsWith("TV", StringComparison.OrdinalIgnoreCase) == true ? "VND" : "USD")
+                                    : currency;
                                 var pricedMaterialSet = pricedMaterials
-                                    .Where(p => string.IsNullOrWhiteSpace(p.Currency) || string.Equals(p.Currency, validCurrency, StringComparison.OrdinalIgnoreCase))
+                                    .Where(p => !string.IsNullOrWhiteSpace(p.Currency) && (string.IsNullOrWhiteSpace(validCurrency) || string.Equals(p.Currency, validCurrency, StringComparison.OrdinalIgnoreCase)))
                                     .Select(p => p.Material.TrimStart('0'))
                                     .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
                                 var missingPr00Items = lineItemDtos
-                                    .Where(item => !pricedMaterialSet.Contains(item.Material.TrimStart('0')))
+                                    .Select((item, index) => new { LineNo = (index + 1) * 10, item.Material })
+                                    .Where(x => !pricedMaterialSet.Contains(x.Material.TrimStart('0')))
                                     .ToList();
 
                                 if (missingPr00Items.Count > 0)
                                 {
-                                    // Construct the fake SAP message format which our FormatSapErrorMessage will nicely format
-                                    var missingString = string.Join(" , ", missingPr00Items.Select((item, index) => $"{(index + 1) * 10} :{item.Material}"));
+                                    var missingString = string.Join(" , ", missingPr00Items.Select(x => $"{x.LineNo} :{x.Material}"));
                                     var saStr = $"Sales area {salesOrg}/{distChannel}";
                                     throw new SapODataException(400, $"Chưa có giá PR00 cho item (item:material):{missingString}{saStr}");
                                 }
@@ -2250,7 +2259,7 @@ public class TeamsBot : TeamsActivityHandler
                             var sapEx = ex as SapODataException;
                             var isValidation = sapEx?.IsValidationError == true;
                             var errorCode = isValidation ? "VALIDATION" : sapEx != null ? "SAP_ERROR" : "ACTION_FAILED";
-                            var errMsg = sapEx != null ? FormatSapErrorMessage(sapEx.Message) : ex.Message;
+                            var errMsg = sapEx != null ? FormatSapErrorMessage(sapEx.Message, lineItemDtos, salesOrg, distChannel) : ex.Message;
 
                             _logger.LogError(ex, "Error creating sales order (classified={ErrorCode})", errorCode);
 
@@ -4055,26 +4064,38 @@ public class TeamsBot : TeamsActivityHandler
             StringComparer.OrdinalIgnoreCase);
     }
 
-    private string FormatSapErrorMessage(string msg)
+    private string FormatSapErrorMessage(string msg, IReadOnlyList<CreateSalesOrderItemDto>? lineItems = null, string? salesOrg = null, string? distChannel = null)
     {
         if (string.IsNullOrWhiteSpace(msg)) return msg;
 
         // Xử lý lỗi: "Chưa có giá PR00 cho item (item:material):10 :260 , 20 :93Sales area UE00/WH"
-        if (msg.Contains("Chưa có giá PR00"))
+        if (msg.Contains("Chưa có giá PR00", StringComparison.OrdinalIgnoreCase) || msg.Contains("Missing PR00 price", StringComparison.OrdinalIgnoreCase))
         {
             var prefix = "Chưa có giá PR00 cho item (item:material):";
             var idx = msg.IndexOf("Sales area", StringComparison.OrdinalIgnoreCase);
+            var suffix = idx > 0 ? msg.Substring(idx).Trim() : (!string.IsNullOrWhiteSpace(salesOrg) ? $"Sales area {salesOrg}/{distChannel}" : "");
+
+            var reportedItems = new List<string>();
             if (msg.StartsWith(prefix, StringComparison.OrdinalIgnoreCase) && idx > 0)
             {
                 var itemsPart = msg.Substring(prefix.Length, idx - prefix.Length).Trim();
-                var suffix = msg.Substring(idx).Trim();
+                reportedItems = itemsPart.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
+                                         .Select(i => i.Trim())
+                                         .Where(i => !string.IsNullOrWhiteSpace(i))
+                                         .ToList();
+            }
 
-                var items = itemsPart.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
-                                     .Select(i => $"{i.Trim()}");
+            // Fallback: If SAP returned a truncated list (e.g. only 2 items) while more items were submitted in the order
+            if (lineItems != null && lineItems.Count > reportedItems.Count)
+            {
+                reportedItems = lineItems.Select((item, index) => $"{(index + 1) * 10} :{item.Material}").ToList();
+            }
 
+            if (reportedItems.Count > 0)
+            {
                 return $"Missing PR00 price for item (item: material)\n\n" +
-                       $"{string.Join("\n\n", items)}\n\n" +
-                       $"{suffix}";
+                       $"{string.Join("\n\n", reportedItems)}" +
+                       (!string.IsNullOrWhiteSpace(suffix) ? $"\n\n{suffix}" : "");
             }
         }
         return msg;
