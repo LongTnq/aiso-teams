@@ -1825,10 +1825,17 @@ public class TeamsBot : TeamsActivityHandler
 
                         // Validate customer.
                         string? validatedCustomerKey = null;
+                        string? validatedCustomerId = null;
                         if (!string.IsNullOrWhiteSpace(customerKey)
                             && SapValidCustomer.TryParseKey(customerKey, out var custId, out _, out _, out _))
                         {
                             validatedCustomerKey = customerKey;
+                            validatedCustomerId = custId.Trim();
+                        }
+                        else if (!string.IsNullOrWhiteSpace(customerKey))
+                        {
+                            validatedCustomerKey = customerKey;
+                            validatedCustomerId = customerKey.Split('|')[0].Trim();
                         }
                         else if (!string.IsNullOrWhiteSpace(manualCustomerRaw))
                         {
@@ -1851,6 +1858,7 @@ public class TeamsBot : TeamsActivityHandler
 
                             var stripped = manualCustomerRaw.TrimStart('0');
                             validatedCustomerKey = string.IsNullOrEmpty(stripped) ? "0" : stripped;
+                            validatedCustomerId = validatedCustomerKey;
                         }
 
                         if (string.IsNullOrWhiteSpace(validatedCustomerKey))
@@ -1866,10 +1874,11 @@ public class TeamsBot : TeamsActivityHandler
                         try
                         {
                             var custRows = await _sap.GetValidCustomersAsync(salesOrg, distChannel, division, top: 75, ct: cancellationToken);
+                            var checkId = validatedCustomerId ?? validatedCustomerKey;
                             var found = custRows.FirstOrDefault(c =>
-                                string.Equals(c.Customer.TrimStart('0'), validatedCustomerKey.TrimStart('0'), StringComparison.OrdinalIgnoreCase)
-                                || string.Equals(c.Customer, validatedCustomerKey, StringComparison.OrdinalIgnoreCase));
-                            customerLabel = found?.Label ?? validatedCustomerKey.TrimStart('0');
+                                string.Equals(c.Customer.TrimStart('0'), checkId.TrimStart('0'), StringComparison.OrdinalIgnoreCase)
+                                || string.Equals(c.Customer, checkId, StringComparison.OrdinalIgnoreCase));
+                            customerLabel = found?.Label ?? checkId.TrimStart('0');
                         }
                         catch
                         {
@@ -1885,13 +1894,13 @@ public class TeamsBot : TeamsActivityHandler
                                 materials = await _sap.GetValidMaterialSalesAsync(top: 500, ct: cancellationToken);
 
                             // Lấy giá trị giao với danh sách PricedMaterial
-                            var pricedMaterials = await _sap.GetPricedMaterialsAsync(salesOrg, distChannel, validatedCustomerKey, top: 200, ct: cancellationToken);
+                            var pricedMaterials = await _sap.GetPricedMaterialsAsync(salesOrg, distChannel, validatedCustomerId ?? validatedCustomerKey, top: 200, ct: cancellationToken);
                             var validCurrency = string.IsNullOrWhiteSpace(currency)
                                 ? (salesOrg?.StartsWith("TV", StringComparison.OrdinalIgnoreCase) == true ? "VND" : "USD")
                                 : currency;
 
                             var pricedMaterialSet = pricedMaterials
-                                .Where(p => !string.IsNullOrWhiteSpace(p.Currency) && (string.IsNullOrWhiteSpace(validCurrency) || string.Equals(p.Currency, validCurrency, StringComparison.OrdinalIgnoreCase)))
+                                .Where(p => string.IsNullOrWhiteSpace(p.Currency) || string.IsNullOrWhiteSpace(validCurrency) || string.Equals(p.Currency, validCurrency, StringComparison.OrdinalIgnoreCase))
                                 .Select(p => p.Material.TrimStart('0'))
                                 .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
@@ -2262,7 +2271,7 @@ public class TeamsBot : TeamsActivityHandler
                                     ? (salesOrg?.StartsWith("TV", StringComparison.OrdinalIgnoreCase) == true ? "VND" : "USD")
                                     : currency;
                                 var pricedMaterialSet = pricedMaterials
-                                    .Where(p => !string.IsNullOrWhiteSpace(p.Currency) && (string.IsNullOrWhiteSpace(validCurrency) || string.Equals(p.Currency, validCurrency, StringComparison.OrdinalIgnoreCase)))
+                                    .Where(p => string.IsNullOrWhiteSpace(p.Currency) || string.IsNullOrWhiteSpace(validCurrency) || string.Equals(p.Currency, validCurrency, StringComparison.OrdinalIgnoreCase))
                                     .Select(p => p.Material.TrimStart('0'))
                                     .ToHashSet(StringComparer.OrdinalIgnoreCase);
 

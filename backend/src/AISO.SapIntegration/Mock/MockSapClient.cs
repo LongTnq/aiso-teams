@@ -270,6 +270,10 @@ public sealed class MockSapClient : ISapClient
             // MATE_DEV387 mock mapped to TG11 which we use for demo
             new("UE00", "10", "", "TG11", "USD"),
             new("UE00", "10", "1000", "TG12", "USD"),
+            new("TV01", "T1", "", "JSH00819-065-A0", "VND"),
+            new("TV01", "T1", "", "JSH00819-212-A0", "VND"),
+            new("TV01", "T1", "", "TV_TEST04", "VND"),
+            new("TV01", "T1", "1005000016", "JSH00819-065-A0", "VND"),
         };
 
         IEnumerable<SapPricedMaterial> filtered = allMaterials;
@@ -280,7 +284,8 @@ public sealed class MockSapClient : ISapClient
 
         if (!string.IsNullOrWhiteSpace(customer))
         {
-            filtered = filtered.Where(m => m.Customer == "" || string.Equals(m.Customer, customer.Trim(), StringComparison.OrdinalIgnoreCase));
+            var cleanCust = customer.Contains('|') ? customer.Split('|')[0].Trim() : customer.Trim();
+            filtered = filtered.Where(m => m.Customer == "" || string.Equals(m.Customer, cleanCust, StringComparison.OrdinalIgnoreCase));
         }
         else
         {
@@ -752,6 +757,7 @@ public sealed class MockSapClient : ISapClient
         [
             new("10100001", "TV01", "10", "00", "Domestic Customer US"),
             new("10100002", "TV01", "10", "00", "Philly Bikes"),
+            new("1005000016", "TV01", "T1", "10", "CÔNG TY CỔ PHẦN VẬT LIỆU THÔNG MINH"),
             new("10100001", "FU24", "10", "00", "Domestic Customer US"),
             new("17100001", "FU24", "10", "00", "Customer FU24"),
             new("100323", "FU24", "FR", "FG", "Customer FR/FG")

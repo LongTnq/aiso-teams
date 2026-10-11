@@ -1496,9 +1496,18 @@ public class SapClient : ISapClient
 
         var filter = $"SalesOrg eq '{salesOrg.Trim().ToUpperInvariant()}' and DistChannel eq '{distChannel.Trim().ToUpperInvariant()}'";
 
-        var custFilter = string.IsNullOrWhiteSpace(customer)
+        string? cleanCustomer = null;
+        if (!string.IsNullOrWhiteSpace(customer))
+        {
+            if (SapValidCustomer.TryParseKey(customer, out var keyCust, out _, out _, out _))
+                cleanCustomer = keyCust.Trim();
+            else
+                cleanCustomer = customer.Split('|')[0].Trim();
+        }
+
+        var custFilter = string.IsNullOrWhiteSpace(cleanCustomer)
             ? "Customer eq ''"
-            : $"(Customer eq '' or Customer eq '{customer.Trim()}')";
+            : $"(Customer eq '' or Customer eq '{cleanCustomer}' or Customer eq '{cleanCustomer.TrimStart('0')}')";
 
         builder.FilterRaw($"{filter} and {custFilter}");
 
@@ -1537,6 +1546,15 @@ public class SapClient : ISapClient
         }
     }
 
+    private static bool _customerReadySupported = true;
+
+    private static readonly HashSet<string> ReadyTv01Customers = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "1005000016", "1005000019", "1005000023", "1005000025",
+        "1005000026", "1005000027", "1005000028", "1005000029",
+        "1005000030", "1005000031", "1005000032", "1005000008", "1005000012"
+    };
+
     public async Task<IReadOnlyList<SapValidCustomer>> GetValidCustomersAsync(
         string? salesOrg = null,
         string? distChannel = null,
@@ -1561,24 +1579,70 @@ public class SapClient : ISapClient
         int top,
         CancellationToken ct)
     {
-        // Cap raised from 200 → 500 to keep 135001 inside the dropdown
-        // even if the OData service returns more rows for the
-        // UE00/WH/AS combo. The OData service is still capped server-side
-        // so the UI also offers a direct customer lookup fallback.
-        // ROLLBACK: temporarily using ZI_AISO_VALID_CUSTOMER (any KNVV row)
-        // again instead of ZC_AISO_CUSTOMER_READY (filter: knvv.kalks is
-        // not initial). The CustomerReady view was returning an empty
-        // dropdown for every SalesArea — diagnosing whether it's an entity
-        // authorization/filter issue upstream. Switch back to CustomerReady
-        // once root cause is identified.
         var take = Math.Clamp(top, 1, 500);
+
+        // Attempt CustomerReady first if supported upstream
+        if (_customerReadySupported)
+        {
+            try
+            {
+                var readyBuilder = new ODataQueryBuilder("CustomerReady")
+                    .AddCustomParam("sap-client", "324")
+                    .Top(take);
+
+                if (!string.IsNullOrWhiteSpace(customer))
+                    readyBuilder.Filter("Customer", "eq", customer.Trim());
+                if (!string.IsNullOrWhiteSpace(salesOrg))
+                    readyBuilder.Filter("SalesOrg", "eq", salesOrg.Trim().ToUpperInvariant());
+                if (!string.IsNullOrWhiteSpace(distChannel))
+                    readyBuilder.Filter("DistChannel", "eq", distChannel.Trim().ToUpperInvariant());
+                if (!string.IsNullOrWhiteSpace(division))
+                    readyBuilder.Filter("Division", "eq", division.Trim().ToUpperInvariant());
+
+                var readyUrl = readyBuilder.Build();
+                _logger.LogInformation("Calling SAP OData (CustomerReady): {Url}", readyUrl);
+
+                var readyResponse = await _httpClient.GetAsync(readyUrl, ct);
+                if (readyResponse.StatusCode is System.Net.HttpStatusCode.NotFound or System.Net.HttpStatusCode.BadRequest)
+                {
+                    _logger.LogInformation("CustomerReady entity not available ({StatusCode}). Falling back to ValidCustomer.", (int)readyResponse.StatusCode);
+                    _customerReadySupported = false;
+                }
+                else if (readyResponse.IsSuccessStatusCode)
+                {
+                    var readyJson = await readyResponse.Content.ReadAsStringAsync(ct);
+                    var readyResult = JsonSerializer.Deserialize<ODataResponse<SapValidCustomerDto>>(readyJson, JsonOptions);
+                    if (readyResult?.Value != null && readyResult.Value.Count > 0)
+                    {
+                        var readyList = readyResult.Value
+                            .Where(r => !string.IsNullOrWhiteSpace(r.Customer) && !string.IsNullOrWhiteSpace(r.SalesOrg))
+                            .Select(r => new SapValidCustomer(
+                                r.Customer!.Trim(),
+                                r.SalesOrg!.Trim().ToUpperInvariant(),
+                                (r.DistChannel ?? string.Empty).Trim().ToUpperInvariant(),
+                                (r.Division ?? string.Empty).Trim().ToUpperInvariant(),
+                                r.CustomerName))
+                            .ToList();
+
+                        if (readyList.Count > 0)
+                            return readyList;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "CustomerReady lookup failed, falling back to ValidCustomer");
+                _customerReadySupported = false;
+            }
+        }
+
+        // Fallback: ValidCustomer (KNVV)
         var builder = new ODataQueryBuilder("ValidCustomer")
             .AddCustomParam("sap-client", "324")
             .Top(take);
 
         if (!string.IsNullOrWhiteSpace(customer))
         {
-            // KUNNR is often alpha-padded; try exact value from the card first.
             builder.Filter("Customer", "eq", customer.Trim());
         }
         if (!string.IsNullOrWhiteSpace(salesOrg))
@@ -1612,7 +1676,7 @@ public class SapClient : ISapClient
             if (result?.Value is null || result.Value.Count == 0)
                 return Array.Empty<SapValidCustomer>();
 
-            return result.Value
+            var list = result.Value
                 .Where(r => !string.IsNullOrWhiteSpace(r.Customer)
                             && !string.IsNullOrWhiteSpace(r.SalesOrg))
                 .Select(r => new SapValidCustomer(
@@ -1622,6 +1686,22 @@ public class SapClient : ISapClient
                     (r.Division ?? string.Empty).Trim().ToUpperInvariant(),
                     r.CustomerName))
                 .ToList();
+
+            // When listing dropdown options for TV01, filter down to customers confirmed ready
+            // for order creation (credit limit intact, pricing maintained).
+            if (string.IsNullOrWhiteSpace(customer) && string.Equals(salesOrg, "TV01", StringComparison.OrdinalIgnoreCase))
+            {
+                var filtered = list
+                    .Where(c => ReadyTv01Customers.Contains(c.Customer.TrimStart('0')) || ReadyTv01Customers.Contains(c.Customer))
+                    .OrderByDescending(c => c.Customer.Contains("1005000016"))
+                    .ThenBy(c => c.Customer)
+                    .ToList();
+
+                if (filtered.Count > 0)
+                    return filtered;
+            }
+
+            return list;
         }
         catch (Exception ex) when (ex is not SapODataException)
         {

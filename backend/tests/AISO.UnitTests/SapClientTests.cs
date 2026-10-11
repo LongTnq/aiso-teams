@@ -667,6 +667,50 @@ public class SapClientTests
         Assert.Equal("UE00", areas[0].SalesOrg);
     }
 
+    [Fact]
+    public async Task GetPricedMaterials_NormalizesCompositeCustomerKeyAndBuildsCorrectFilter()
+    {
+        var json = """
+            {"value":[
+                {"SalesOrg":"TV01","DistChannel":"T1","Customer":"1005000016","Material":"JSH00819-065-A0","Currency":"VND"}
+            ]}
+            """;
+        var client = CreateClient(HttpStatusCode.OK, json, out var handler);
+
+        var result = await client.GetPricedMaterialsAsync("TV01", "T1", "1005000016|TV01|T1|10");
+
+        Assert.Single(result);
+        Assert.Equal("JSH00819-065-A0", result[0].Material);
+        Assert.NotNull(handler.LastRequestUri);
+        Assert.Contains("1005000016", handler.LastRequestUri);
+        Assert.DoesNotContain("|TV01|T1|10", handler.LastRequestUri);
+    }
+
+    [Fact]
+    public async Task GetValidCustomers_WhenTv01_FiltersToReadyCustomersAndPuts1005000016First()
+    {
+        var validCustomerJson = """
+            {"value":[
+                {"Customer":"1005000015","SalesOrg":"TV01","DistChannel":"T1","Division":"10","CustomerName":"Bad Credit"},
+                {"Customer":"1005000016","SalesOrg":"TV01","DistChannel":"T1","Division":"10","CustomerName":"Good Customer"},
+                {"Customer":"1005000019","SalesOrg":"TV01","DistChannel":"T1","Division":"10","CustomerName":"Another Good Customer"}
+            ]}
+            """;
+        var handler = new StubHttpMessageHandler(
+            (HttpStatusCode.NotFound, ""), // CustomerReady returns 404
+            (HttpStatusCode.OK, validCustomerJson)); // ValidCustomer returns list
+
+        var httpClient = new HttpClient(handler) { BaseAddress = new Uri("https://sap.test/") };
+        var client = new SapClient(httpClient, new StubTokenManager(), NullLogger<SapClient>.Instance);
+
+        var customers = await client.GetValidCustomersAsync("TV01", "T1", "10");
+
+        // 1005000015 should be excluded; 1005000016 should be first
+        Assert.Equal(2, customers.Count);
+        Assert.Equal("1005000016", customers[0].Customer);
+        Assert.Equal("1005000019", customers[1].Customer);
+    }
+
     private sealed class StubTokenManager : ISapTokenManager
     {
         public Task<SapAuthContext> GetAuthContextAsync(CancellationToken cancellationToken = default)
