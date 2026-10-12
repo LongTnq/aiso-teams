@@ -4219,9 +4219,35 @@ public class TeamsBot : TeamsActivityHandler
             salesOrg = "TV01";
         }
 
-        var distChannel = "10";
+        var distChannel = "T1";
         var division = "10";
-        var plant = "1010";
+
+        try
+        {
+            var customers = await _sap.GetValidCustomersAsync(salesOrg: salesOrg, top: 100, ct: cancellationToken);
+            if (customers.Count == 0)
+            {
+                customers = await _sap.GetValidCustomersAsync(top: 100, ct: cancellationToken);
+            }
+
+            var trimmedCust = customerId.TrimStart('0');
+            var matchedCustomer = customers.FirstOrDefault(c =>
+                string.Equals(c.Customer.TrimStart('0'), trimmedCust, StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(c.Customer, customerId, StringComparison.OrdinalIgnoreCase));
+
+            if (matchedCustomer != null)
+            {
+                salesOrg = matchedCustomer.SalesOrg;
+                distChannel = matchedCustomer.DistChannel;
+                division = matchedCustomer.Division;
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to resolve customer sales area for {Customer}", customerId);
+        }
+
+        var plant = salesOrg;
         var unit = "EA";
 
         try
@@ -4251,6 +4277,12 @@ public class TeamsBot : TeamsActivityHandler
             Unit = unit
         };
 
+        var currency = string.Equals(salesOrg, "FU24", StringComparison.OrdinalIgnoreCase)
+            ? "EUR"
+            : string.Equals(salesOrg, "TV01", StringComparison.OrdinalIgnoreCase)
+                ? "VND"
+                : "USD";
+
         var payload = new CreateSalesOrderDto
         {
             DocType = "OR",
@@ -4258,7 +4290,7 @@ public class TeamsBot : TeamsActivityHandler
             DistChannel = distChannel,
             Division = division,
             Customer = customerId,
-            Currency = "VND",
+            Currency = currency,
             RequestingSapUser = sapUsername,
             Items = new[] { lineItemDto }
         };
