@@ -505,10 +505,7 @@ internal static class TeamsCardBuilder
                 purchaseOrderRef = purchaseOrderRef ?? "",
                 requestedDeliveryDate = requestedDeliveryDate ?? "",
                 shipToParty = shipToParty ?? "",
-                hasShipToParty = !string.IsNullOrWhiteSpace(shipToParty) ? "true" : "false",
-                unit1 = "",
-                unit2 = "",
-                unit3 = ""
+                hasShipToParty = !string.IsNullOrWhiteSpace(shipToParty) ? "true" : "false"
             });
 
     public static Attachment BuildCreateOrderStep4ReviewCard(

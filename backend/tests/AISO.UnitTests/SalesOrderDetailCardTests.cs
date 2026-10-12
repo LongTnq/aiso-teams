@@ -557,5 +557,27 @@ public class CreateOrderStep1CardTests
         Assert.Contains("\"value\":\"FR\"", json, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("\"value\":\"FG\"", json, StringComparison.OrdinalIgnoreCase);
     }
+
+    [Fact]
+    public void BuildCreateOrderStep3Card_OmitsUnitInputsAndPreservesMaterialAndQty()
+    {
+        var attachment = TeamsCardBuilder.BuildCreateOrderStep3Card(
+            customerLabel: "Acme (1000)",
+            customerKey: "1000|TV01|10|00",
+            salesAreaLabel: "TV01 / 10 / 00",
+            salesAreaKey: "TV01|10|00",
+            materialChoices: new[]
+            {
+                new AISO.AiOrchestration.Functions.ConfirmCreateChoice("Widget 1", "MAT-1|1010|EA")
+            });
+        var json = JsonConvert.SerializeObject(attachment.Content);
+
+        Assert.Contains("\"id\":\"material1\"", json);
+        Assert.Contains("\"id\":\"qty1\"", json);
+        Assert.DoesNotContain("\"id\":\"unit1\"", json);
+        Assert.DoesNotContain("Unit *", json);
+        Assert.DoesNotContain("lineItemsContainer", json);
+    }
 }
+
 

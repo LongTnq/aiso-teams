@@ -2034,7 +2034,9 @@ public class TeamsBot : TeamsActivityHandler
                             var itemPlant = parts.Length >= 2 ? parts[1].Trim() : "";
 
                             var rawUnit = valueObj.TryGetValue(unitKey, StringComparison.OrdinalIgnoreCase, out var uVal) ? uVal?.ToString()?.Trim() : null;
-                            var itemUnit = !string.IsNullOrWhiteSpace(rawUnit) ? rawUnit : (parts.Length >= 3 ? parts[2].Trim() : "");
+                            var itemUnit = !string.IsNullOrWhiteSpace(rawUnit) ? rawUnit : (parts.Length >= 3 ? parts[2].Trim() : "EA");
+                            if (string.IsNullOrWhiteSpace(itemUnit))
+                                itemUnit = "EA";
 
                             if (string.IsNullOrWhiteSpace(itemPlant) || string.IsNullOrWhiteSpace(itemUnit))
                             {

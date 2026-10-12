@@ -69,27 +69,6 @@
       "wrap": true
     },
     {
-      "type": "Container",
-      "id": "lineItemsContainer",
-      "spacing": "Small",
-      "items": [
-        {
-          "type": "TextBlock",
-          "text": "Material",
-          "weight": "Bolder",
-          "size": "Small",
-          "wrap": true
-        },
-        {
-          "type": "TextBlock",
-          "text": "Qty",
-          "weight": "Bolder",
-          "size": "Small",
-          "horizontalAlignment": "Right"
-        }
-      ]
-    },
-    {
       "type": "Input.Text",
       "id": "itemsJson",
       "label": "Items (hidden) *",
@@ -124,7 +103,7 @@
         },
         {
           "type": "Column",
-          "width": "80px",
+          "width": "100px",
           "items": [
             {
               "type": "Input.Number",
@@ -134,18 +113,6 @@
               "errorMessage": "Qty required",
               "min": 1,
               "value": 1
-            }
-          ]
-        },
-        {
-          "type": "Column",
-          "width": "80px",
-          "items": [
-            {
-              "type": "Input.Text",
-              "id": "unit1",
-              "label": "Unit *",
-              "value": "${unit1}"
             }
           ]
         }
@@ -177,7 +144,7 @@
         },
         {
           "type": "Column",
-          "width": "80px",
+          "width": "100px",
           "items": [
             {
               "type": "Input.Number",
@@ -185,18 +152,6 @@
               "label": "Qty *",
               "min": 0,
               "value": 0
-            }
-          ]
-        },
-        {
-          "type": "Column",
-          "width": "80px",
-          "items": [
-            {
-              "type": "Input.Text",
-              "id": "unit2",
-              "label": "Unit *",
-              "value": "${unit2}"
             }
           ]
         }
@@ -228,7 +183,7 @@
         },
         {
           "type": "Column",
-          "width": "80px",
+          "width": "100px",
           "items": [
             {
               "type": "Input.Number",
@@ -236,18 +191,6 @@
               "label": "Qty *",
               "min": 0,
               "value": 0
-            }
-          ]
-        },
-        {
-          "type": "Column",
-          "width": "80px",
-          "items": [
-            {
-              "type": "Input.Text",
-              "id": "unit3",
-              "label": "Unit *",
-              "value": "${unit3}"
             }
           ]
         }
@@ -283,7 +226,7 @@
             },
             {
               "type": "Column",
-              "width": "80px",
+              "width": "100px",
               "items": [
                 {
                   "type": "Input.Number",
@@ -291,17 +234,6 @@
                   "label": "Qty *",
                   "min": 0,
                   "value": 0
-                }
-              ]
-            },
-            {
-              "type": "Column",
-              "width": "80px",
-              "items": [
-                {
-                  "type": "Input.Text",
-                  "id": "unit4",
-                  "label": "Unit *"
                 }
               ]
             }
@@ -339,7 +271,7 @@
             },
             {
               "type": "Column",
-              "width": "80px",
+              "width": "100px",
               "items": [
                 {
                   "type": "Input.Number",
@@ -347,17 +279,6 @@
                   "label": "Qty *",
                   "min": 0,
                   "value": 0
-                }
-              ]
-            },
-            {
-              "type": "Column",
-              "width": "80px",
-              "items": [
-                {
-                  "type": "Input.Text",
-                  "id": "unit5",
-                  "label": "Unit *"
                 }
               ]
             }
@@ -395,7 +316,7 @@
             },
             {
               "type": "Column",
-              "width": "80px",
+              "width": "100px",
               "items": [
                 {
                   "type": "Input.Number",
@@ -403,17 +324,6 @@
                   "label": "Qty *",
                   "min": 0,
                   "value": 0
-                }
-              ]
-            },
-            {
-              "type": "Column",
-              "width": "80px",
-              "items": [
-                {
-                  "type": "Input.Text",
-                  "id": "unit6",
-                  "label": "Unit *"
                 }
               ]
             }
@@ -451,7 +361,7 @@
             },
             {
               "type": "Column",
-              "width": "80px",
+              "width": "100px",
               "items": [
                 {
                   "type": "Input.Number",
@@ -459,17 +369,6 @@
                   "label": "Qty *",
                   "min": 0,
                   "value": 0
-                }
-              ]
-            },
-            {
-              "type": "Column",
-              "width": "80px",
-              "items": [
-                {
-                  "type": "Input.Text",
-                  "id": "unit7",
-                  "label": "Unit *"
                 }
               ]
             }
@@ -507,7 +406,7 @@
             },
             {
               "type": "Column",
-              "width": "80px",
+              "width": "100px",
               "items": [
                 {
                   "type": "Input.Number",
@@ -515,17 +414,6 @@
                   "label": "Qty *",
                   "min": 0,
                   "value": 0
-                }
-              ]
-            },
-            {
-              "type": "Column",
-              "width": "80px",
-              "items": [
-                {
-                  "type": "Input.Text",
-                  "id": "unit8",
-                  "label": "Unit *"
                 }
               ]
             }
@@ -563,7 +451,7 @@
             },
             {
               "type": "Column",
-              "width": "80px",
+              "width": "100px",
               "items": [
                 {
                   "type": "Input.Number",
@@ -571,17 +459,6 @@
                   "label": "Qty *",
                   "min": 0,
                   "value": 0
-                }
-              ]
-            },
-            {
-              "type": "Column",
-              "width": "80px",
-              "items": [
-                {
-                  "type": "Input.Text",
-                  "id": "unit9",
-                  "label": "Unit *"
                 }
               ]
             }
@@ -619,7 +496,7 @@
             },
             {
               "type": "Column",
-              "width": "80px",
+              "width": "100px",
               "items": [
                 {
                   "type": "Input.Number",
@@ -627,17 +504,6 @@
                   "label": "Qty *",
                   "min": 0,
                   "value": 0
-                }
-              ]
-            },
-            {
-              "type": "Column",
-              "width": "80px",
-              "items": [
-                {
-                  "type": "Input.Text",
-                  "id": "unit10",
-                  "label": "Unit *"
                 }
               ]
             }
