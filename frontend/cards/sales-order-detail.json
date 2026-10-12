@@ -107,6 +107,27 @@
     },
     {
       "type": "Container",
+      "style": "good",
+      "spacing": "Medium",
+      "$when": "${showCreatedBanner == 'true'}",
+      "items": [
+        {
+          "type": "TextBlock",
+          "text": "Sales order created successfully",
+          "weight": "Bolder",
+          "wrap": true
+        },
+        {
+          "type": "TextBlock",
+          "text": "Order ${salesOrderNumber} has been created in SAP and is ready for release.",
+          "isSubtle": true,
+          "wrap": true,
+          "spacing": "None"
+        }
+      ]
+    },
+    {
+      "type": "Container",
       "style": "emphasis",
       "spacing": "Medium",
       "$when": "${showOwnedBy == 'true'}",

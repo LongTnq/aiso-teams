@@ -2320,21 +2320,26 @@ public class TeamsBot : TeamsActivityHandler
                                 ResultStatus = "Success"
                             }, cancellationToken);
 
-                            var successActivity = MessageFactory.Attachment(TeamsCardBuilder.BuildSuccessCard(
-                                created.SoNumber,
-                                "Created",
-                                $"{resolvedCustomerId} · {linesSummary}"));
-                            successActivity.Id = turnContext.Activity.ReplyToId;
-                            await turnContext.UpdateActivityAsync(successActivity, cancellationToken);
-
                             var roleForDetail = await _userMappingService.GetRoleAsync(teamsUserId, cancellationToken);
-                            await turnContext.SendActivityAsync(
-                                MessageFactory.Attachment(await BuildSalesOrderDetailAttachmentAsync(
-                                    created,
-                                    roleForDetail,
-                                    linkedSapUsername,
-                                    cancellationToken)),
-                                cancellationToken);
+                            var detailAttachment = await BuildSalesOrderDetailAttachmentAsync(
+                                created,
+                                roleForDetail,
+                                linkedSapUsername,
+                                cancellationToken,
+                                isNewlyCreated: true);
+
+                            if (!string.IsNullOrWhiteSpace(turnContext.Activity.ReplyToId))
+                            {
+                                var detailActivity = MessageFactory.Attachment(detailAttachment);
+                                detailActivity.Id = turnContext.Activity.ReplyToId;
+                                await turnContext.UpdateActivityAsync(detailActivity, cancellationToken);
+                            }
+                            else
+                            {
+                                await turnContext.SendActivityAsync(
+                                    MessageFactory.Attachment(detailAttachment),
+                                    cancellationToken);
+                            }
                         }
                         catch (Exception ex)
                         {
@@ -4115,7 +4120,8 @@ public class TeamsBot : TeamsActivityHandler
         Domain.SalesOrders.SalesOrder order,
         UserRole role,
         string? currentSapUser,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        bool isNewlyCreated = false)
     {
         var latest = await _approvals.GetLatestBySoNumberAsync(order.SoNumber, cancellationToken);
         var pending = latest is { Status: ApprovalStatus.Pending }
@@ -4129,7 +4135,8 @@ public class TeamsBot : TeamsActivityHandler
             pendingRequestedBySapUser: pending?.RequestedBySapUser ?? latest?.RequestedBySapUser,
             currentSapUser: currentSapUser,
             pendingComment: pending?.Comment,
-            approval: latest);
+            approval: latest,
+            isNewlyCreated: isNewlyCreated);
     }
 
     private async Task<IReadOnlyDictionary<string, OrderApprovalRequest?>> GetLatestApprovalsBySoAsync(
