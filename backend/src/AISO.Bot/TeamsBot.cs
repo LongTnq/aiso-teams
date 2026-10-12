@@ -1312,13 +1312,31 @@ public class TeamsBot : TeamsActivityHandler
                                 cancellationToken);
 
                             var roleForDetail = await _userMappingService.GetRoleAsync(teamsUserId, cancellationToken);
-                            var updatedCard = MessageFactory.Attachment(await BuildSalesOrderDetailAttachmentAsync(
+                            var resultCard = MessageFactory.Attachment(await BuildSalesOrderDetailAttachmentAsync(
                                 updated,
                                 roleForDetail,
                                 linkedSapUsername,
                                 cancellationToken));
-                            updatedCard.Id = turnContext.Activity.ReplyToId;
-                            await turnContext.UpdateActivityAsync(updatedCard, cancellationToken);
+
+                            if (!string.IsNullOrWhiteSpace(turnContext.Activity.ReplyToId))
+                            {
+                                try
+                                {
+                                    var collapsedCard = MessageFactory.Attachment(
+                                        TeamsCardBuilder.BuildCompactActionResultCard(
+                                            "Order approved",
+                                            $"Sales order {salesOrderId} has been approved and released in SAP.",
+                                            "good"));
+                                    collapsedCard.Id = turnContext.Activity.ReplyToId;
+                                    await turnContext.UpdateActivityAsync(collapsedCard, cancellationToken);
+                                }
+                                catch (Exception ex)
+                                {
+                                    _logger.LogWarning(ex, "Could not update confirm card activity {ActivityId}", turnContext.Activity.ReplyToId);
+                                }
+                            }
+
+                            await turnContext.SendActivityAsync(resultCard, cancellationToken);
                         }
                         catch (UnauthorizedAccessException authEx)
                         {
@@ -1400,16 +1418,33 @@ public class TeamsBot : TeamsActivityHandler
                                 linkedSapUsername,
                                 comment,
                                 cancellationToken);
+                            if (!string.IsNullOrWhiteSpace(turnContext.Activity.ReplyToId))
+                            {
+                                try
+                                {
+                                    var collapsedCard = MessageFactory.Attachment(
+                                        TeamsCardBuilder.BuildCompactActionResultCard(
+                                            "Approval rejected",
+                                            $"Release request for sales order {salesOrderId} was rejected.",
+                                            "attention"));
+                                    collapsedCard.Id = turnContext.Activity.ReplyToId;
+                                    await turnContext.UpdateActivityAsync(collapsedCard, cancellationToken);
+                                }
+                                catch (Exception ex)
+                                {
+                                    _logger.LogWarning(ex, "Could not update confirm card activity {ActivityId}", turnContext.Activity.ReplyToId);
+                                }
+                            }
+
                             if (order != null)
                             {
                                 var roleForDetail = await _userMappingService.GetRoleAsync(teamsUserId, cancellationToken);
-                                var updatedCard = MessageFactory.Attachment(await BuildSalesOrderDetailAttachmentAsync(
+                                var detailCard = MessageFactory.Attachment(await BuildSalesOrderDetailAttachmentAsync(
                                     order,
                                     roleForDetail,
                                     linkedSapUsername,
                                     cancellationToken));
-                                updatedCard.Id = turnContext.Activity.ReplyToId;
-                                await turnContext.UpdateActivityAsync(updatedCard, cancellationToken);
+                                await turnContext.SendActivityAsync(detailCard, cancellationToken);
                             }
                             else
                             {
@@ -4257,7 +4292,7 @@ public class TeamsBot : TeamsActivityHandler
             if (idx >= 0)
             {
                 var rawSuffix = msg.Substring(idx).Trim();
-                var saMatch = Regex.Match(rawSuffix, @"^Sales area\s+([^\s,]+)(?:,\s*([A-Za-z]{3}))?\s*(.*)$", RegexOptions.IgnoreCase);
+                var saMatch = Regex.Match(rawSuffix, @"^Sales area\s+([^\s,]+)(?:,\s*([A-Za-z]{3}))?\s*(.*)$", RegexOptions.IgnoreCase | RegexOptions.Singleline);
                 if (saMatch.Success)
                 {
                     salesAreaText = $"Sales area {saMatch.Groups[1].Value.Trim()}";

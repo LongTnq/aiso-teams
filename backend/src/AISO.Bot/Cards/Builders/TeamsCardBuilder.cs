@@ -724,6 +724,44 @@ internal static class TeamsCardBuilder
     public static Attachment BuildConfirmRejectApprovalCard(string salesOrderNumber) =>
         CardTemplateFileLoader.BuildAdaptiveCardAttachment("confirm-reject-approval.json", new { salesOrderNumber });
 
+    public static Attachment BuildCompactActionResultCard(string title, string message, string style = "good")
+    {
+        var card = new
+        {
+            type = "AdaptiveCard",
+            version = "1.5",
+            body = new object[]
+            {
+                new
+                {
+                    type = "Container",
+                    style,
+                    items = new object[]
+                    {
+                        new
+                        {
+                            type = "TextBlock",
+                            text = title,
+                            weight = "Bolder",
+                            size = "Medium",
+                            wrap = true
+                        },
+                        new
+                        {
+                            type = "TextBlock",
+                            text = message,
+                            size = "Small",
+                            isSubtle = true,
+                            wrap = true,
+                            spacing = "Small"
+                        }
+                    }
+                }
+            }
+        };
+        return CardTemplateFileLoader.BuildAdaptiveCardFromObject(card);
+    }
+
     public static Attachment BuildReleaseRequestNotificationCard(
         string salesOrderNumber,
         string requestedBy,
@@ -1058,35 +1096,44 @@ internal static class TeamsCardBuilder
             approvalHint = hint,
             hasItems = items.Count > 0 ? "true" : "false",
             showInvalidMaterial = order.HasInvalidMaterial ? "true" : "false",
-            showOwnedBy = hasOwner ? "true" : "false",
+            showOwnedBy = (hasOwner && !showReleasedUx && !(showActivePending && isApprover)) ? "true" : "false",
             ownedBySapUser = hasOwner ? owner! : string.Empty,
             ownedByMessage = !hasOwner
                 ? string.Empty
                 : isOwner
                     ? "You currently own this order."
-                    : "You can view this order, but Request release / Reject / Forward are limited to the owner.",
+                    : isApprover
+                        ? $"Managed by {owner}."
+                        : "You can view this order, but Request release / Reject / Forward are limited to the owner.",
             showPendingEmployee = showActivePending && isEmployee ? "true" : "false",
             pendingEmployeeMessage = showActivePending && isEmployee
                 ? $"Release requested by {pendingBy}. Waiting for a manager to approve — you can't change this order until then."
                 : string.Empty,
             showPendingManager = showActivePending && isApprover ? "true" : "false",
             pendingManagerSubmittedBy = showActivePending && isApprover
-                ? $"Submitted by {pendingBy}."
+                ? (approval != null
+                    ? $"Submitted by {pendingBy} · {approval.RequestedAt:dd MMM yyyy, HH:mm 'UTC'}."
+                    : $"Submitted by {pendingBy}.")
                 : string.Empty,
             pendingManagerNote = showActivePending && isApprover
                 ? $"Note for manager: {noteText}"
                 : string.Empty,
             showReleasedBanner = showReleasedUx ? "true" : "false",
             releasedBannerTitle = showReleasedUx ? "Order approved — awaiting delivery" : string.Empty,
-            releasedBannerMessage = string.Empty,
-            showApprovalJourney = showJourney,
+            releasedBannerMessage = showReleasedUx && approval != null
+                ? (string.IsNullOrWhiteSpace(approval.Comment)
+                    ? $"Approved by {approval.DecidedBySapUser ?? "Manager"} · {approval.DecidedAt:dd MMM yyyy, HH:mm 'UTC'}."
+                    : $"Approved by {approval.DecidedBySapUser ?? "Manager"} · {approval.DecidedAt:dd MMM yyyy, HH:mm 'UTC'}.\nNote: {approval.Comment}")
+                : string.Empty,
+            showApprovalJourney = ((showActivePending && isApprover) || showReleasedUx) ? "false" : showJourney,
             journeySteps = journey.Select(s => new { title = s.Title, detail = s.Detail }).ToList(),
             showRequestRelease = isEmployee && canMutateWhilePending ? "true" : "false",
             showApprove = isApprover && canMutateLifecycle && showActivePending && materialOk ? "true" : "false",
-            // Either Manager/Admin cancelling, or owner rejecting (their own, not pending).
-            showDelete = (isApprover || isOwner)
+            // Either Manager/Admin cancelling, or owner rejecting (their own, not pending). Disabled once released/approved.
+            showDelete = !releaseApproved
+                && (isApprover || isOwner)
                 && canReject && materialOk
-                && (isApprover || (!hasPendingApproval && !releaseApproved))
+                && (isApprover || !hasPendingApproval)
                 ? "true" : "false",
             showUpdateReference = canMutateWhilePending ? "true" : "false",
             // Owner (not pending) or Manager/Admin may open full edit.
