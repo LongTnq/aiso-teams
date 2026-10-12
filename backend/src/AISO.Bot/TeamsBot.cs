@@ -1187,8 +1187,15 @@ public class TeamsBot : TeamsActivityHandler
                                     }
                                 }
 
-                                await _sap.ApproveOrderAsync(pending.SoNumber, linkedSapUsername, cancellationToken);
-                                await _approvals.ApproveAsync(pending.SoNumber, linkedSapUsername, managerSalesOrg, isAdmin, comment, cancellationToken);
+                                var updated = await _sap.ApproveOrderAsync(pending.SoNumber, linkedSapUsername, cancellationToken);
+                                var approval = await _approvals.ApproveAsync(pending.SoNumber, linkedSapUsername, managerSalesOrg, isAdmin, comment, cancellationToken);
+
+                                await NotifyRequesterOnApprovalAsync(
+                                    updated,
+                                    approval,
+                                    linkedSapUsername,
+                                    comment,
+                                    cancellationToken);
 
                                 await _audit.LogAsync(new AuditEntry
                                 {
