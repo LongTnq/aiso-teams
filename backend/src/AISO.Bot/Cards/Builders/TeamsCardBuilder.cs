@@ -1029,7 +1029,8 @@ internal static class TeamsCardBuilder
         string? pendingRequestedBySapUser = null,
         string? currentSapUser = null,
         string? pendingComment = null,
-        OrderApprovalRequest? approval = null)
+        OrderApprovalRequest? approval = null,
+        bool isNewlyCreated = false)
     {
         var isEmployee = role is null or UserRole.Employee;
         var isApprover = role is UserRole.Manager or UserRole.Admin;
@@ -1125,6 +1126,7 @@ internal static class TeamsCardBuilder
                     ? $"Approved by {approval.DecidedBySapUser ?? "Manager"} · {approval.DecidedAt:dd MMM yyyy, HH:mm 'UTC'}."
                     : $"Approved by {approval.DecidedBySapUser ?? "Manager"} · {approval.DecidedAt:dd MMM yyyy, HH:mm 'UTC'}.\nNote: {approval.Comment}")
                 : string.Empty,
+            showCreatedBanner = isNewlyCreated ? "true" : "false",
             showApprovalJourney = ((showActivePending && isApprover) || showReleasedUx) ? "false" : showJourney,
             journeySteps = journey.Select(s => new { title = s.Title, detail = s.Detail }).ToList(),
             showRequestRelease = isEmployee && canMutateWhilePending ? "true" : "false",

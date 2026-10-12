@@ -432,6 +432,27 @@ public class SalesOrderDetailCardTests
         Assert.Contains("10100001", json);
     }
 
+    [Fact]
+    public void BuildSalesOrderDetailCard_WhenNewlyCreated_ShowsCreatedBanner()
+    {
+        var order = SampleOrder();
+        var attachment = TeamsCardBuilder.BuildSalesOrderDetailCard(order, UserRole.Employee, isNewlyCreated: true);
+        var json = JsonConvert.SerializeObject(attachment.Content);
+
+        Assert.Contains("Sales order created successfully", json);
+        Assert.Contains("ready for release", json);
+    }
+
+    [Fact]
+    public void BuildSalesOrderDetailCard_WhenDefault_HidesCreatedBanner()
+    {
+        var order = SampleOrder();
+        var attachment = TeamsCardBuilder.BuildSalesOrderDetailCard(order, UserRole.Employee, isNewlyCreated: false);
+        var json = JsonConvert.SerializeObject(attachment.Content);
+
+        Assert.DoesNotContain("Sales order created successfully", json);
+    }
+
     private static SalesOrder SampleOrder(bool withItems = false, SalesOrderStatus status = SalesOrderStatus.Blocked) =>
         new()
         {
@@ -537,3 +558,4 @@ public class CreateOrderStep1CardTests
         Assert.Contains("\"value\":\"FG\"", json, StringComparison.OrdinalIgnoreCase);
     }
 }
+
