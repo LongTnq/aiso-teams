@@ -754,7 +754,7 @@ public class TeamsBot : TeamsActivityHandler
 
                                 // SAP: only approveOrder buffers real RELEASE (clear LIFSK); releaseOrder is audit-only.
                                 var updated = await _sap.ApproveOrderAsync(pending.SoNumber, linkedSapUsername, cancellationToken);
-                                await _approvals.ApproveAsync(
+                                var approval = await _approvals.ApproveAsync(
                                     pending.SoNumber,
                                     linkedSapUsername,
                                     managerSalesOrg,
@@ -762,20 +762,12 @@ public class TeamsBot : TeamsActivityHandler
                                     comment,
                                     cancellationToken);
 
-                                if (_proactiveMessaging != null && !string.IsNullOrWhiteSpace(pending.RequestedBySapUser))
-                                {
-                                    try
-                                    {
-                                        await _proactiveMessaging.SendMessageBySapUserAsync(
-                                            pending.RequestedBySapUser,
-                                            $"✅ Sales order {pending.SoNumber} has been approved and released by {linkedSapUsername}.",
-                                            cancellationToken);
-                                    }
-                                    catch (Exception ex)
-                                    {
-                                        _logger.LogWarning(ex, "Failed to send proactive approval notification for SO {SoNumber}", pending.SoNumber);
-                                    }
-                                }
+                                await NotifyRequesterOnApprovalAsync(
+                                    updated,
+                                    approval,
+                                    linkedSapUsername,
+                                    comment,
+                                    cancellationToken);
 
                                 await turnContext.SendActivityAsync(
                                     MessageFactory.Attachment(TeamsCardBuilder.BuildSuccessCard(updated.SoNumber, "Approved")),
@@ -1304,7 +1296,7 @@ public class TeamsBot : TeamsActivityHandler
 
                             // SAP: approveOrder clears delivery block; releaseOrder no longer does.
                             var updated = await _sap.ApproveOrderAsync(pending.SoNumber, linkedSapUsername, cancellationToken);
-                            await _approvals.ApproveAsync(
+                            var approval = await _approvals.ApproveAsync(
                                 pending.SoNumber,
                                 linkedSapUsername,
                                 managerSalesOrg,
@@ -1312,20 +1304,12 @@ public class TeamsBot : TeamsActivityHandler
                                 comment,
                                 cancellationToken);
 
-                            if (_proactiveMessaging != null && !string.IsNullOrWhiteSpace(pending.RequestedBySapUser))
-                            {
-                                try
-                                {
-                                    await _proactiveMessaging.SendMessageBySapUserAsync(
-                                        pending.RequestedBySapUser,
-                                        $"✅ Sales order {pending.SoNumber} has been approved and released by {linkedSapUsername}.",
-                                        cancellationToken);
-                                }
-                                catch (Exception ex)
-                                {
-                                    _logger.LogWarning(ex, "Failed to send proactive approval notification for SO {SoNumber}", pending.SoNumber);
-                                }
-                            }
+                            await NotifyRequesterOnApprovalAsync(
+                                updated,
+                                approval,
+                                linkedSapUsername,
+                                comment,
+                                cancellationToken);
 
                             var roleForDetail = await _userMappingService.GetRoleAsync(teamsUserId, cancellationToken);
                             var updatedCard = MessageFactory.Attachment(await BuildSalesOrderDetailAttachmentAsync(
@@ -1407,23 +1391,15 @@ public class TeamsBot : TeamsActivityHandler
                                 comment,
                                 cancellationToken);
 
-                            if (_proactiveMessaging != null && !string.IsNullOrWhiteSpace(approval.RequestedBySapUser))
-                            {
-                                try
-                                {
-                                    var rejectReason = string.IsNullOrWhiteSpace(comment) ? "No reason provided" : comment.Trim();
-                                    await _proactiveMessaging.SendMessageBySapUserAsync(
-                                        approval.RequestedBySapUser,
-                                        $"❌ Release request for sales order {salesOrderId} was declined by {linkedSapUsername}: {rejectReason}",
-                                        cancellationToken);
-                                }
-                                catch (Exception ex)
-                                {
-                                    _logger.LogWarning(ex, "Failed to send proactive rejection notification for SO {SoNumber}", salesOrderId);
-                                }
-                            }
-
                             var order = await _sap.GetSalesOrderByIdAsync(salesOrderId, cancellationToken);
+
+                            await NotifyRequesterOnRejectionAsync(
+                                salesOrderId,
+                                order,
+                                approval,
+                                linkedSapUsername,
+                                comment,
+                                cancellationToken);
                             if (order != null)
                             {
                                 var roleForDetail = await _userMappingService.GetRoleAsync(teamsUserId, cancellationToken);
@@ -4187,6 +4163,72 @@ public class TeamsBot : TeamsActivityHandler
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "Failed to send proactive release request notification to managers for SO {SoNumber}", order.SoNumber);
+        }
+    }
+
+    private async Task NotifyRequesterOnApprovalAsync(
+        Domain.SalesOrders.SalesOrder order,
+        OrderApprovalRequest approval,
+        string decidedBySapUsername,
+        string? comment,
+        CancellationToken cancellationToken)
+    {
+        if (_proactiveMessaging == null || string.IsNullOrWhiteSpace(approval.RequestedBySapUser))
+            return;
+
+        try
+        {
+            var netValueFormatted = $"{order.NetValue:N0} {order.Currency}".Trim();
+            var card = TeamsCardBuilder.BuildOrderApprovedNotificationCard(
+                order.SoNumber,
+                decidedBySapUsername,
+                order.SalesOrg ?? approval.SalesOrg ?? string.Empty,
+                netValueFormatted,
+                comment,
+                approval.DecidedAt ?? DateTimeOffset.UtcNow);
+
+            await _proactiveMessaging.SendCardBySapUserAsync(
+                approval.RequestedBySapUser,
+                card,
+                cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to send proactive approval notification card for SO {SoNumber}", order.SoNumber);
+        }
+    }
+
+    private async Task NotifyRequesterOnRejectionAsync(
+        string salesOrderId,
+        Domain.SalesOrders.SalesOrder? order,
+        OrderApprovalRequest approval,
+        string decidedBySapUsername,
+        string? comment,
+        CancellationToken cancellationToken)
+    {
+        if (_proactiveMessaging == null || string.IsNullOrWhiteSpace(approval.RequestedBySapUser))
+            return;
+
+        try
+        {
+            var netValueFormatted = order != null ? $"{order.NetValue:N0} {order.Currency}".Trim() : string.Empty;
+            var salesOrg = order?.SalesOrg ?? approval.SalesOrg ?? string.Empty;
+            var card = TeamsCardBuilder.BuildOrderRejectedNotificationCard(
+                salesOrderId,
+                decidedBySapUsername,
+                salesOrg,
+                netValueFormatted,
+                comment,
+                approval.DecidedAt ?? DateTimeOffset.UtcNow);
+
+            await _proactiveMessaging.SendCardBySapUserAsync(
+                approval.RequestedBySapUser,
+                card,
+                cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to send proactive rejection notification card for SO {SoNumber}", salesOrderId);
         }
     }
 
