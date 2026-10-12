@@ -1693,8 +1693,7 @@ public class SapClient : ISapClient
             {
                 var filtered = list
                     .Where(c => ReadyTv01Customers.Contains(c.Customer.TrimStart('0')) || ReadyTv01Customers.Contains(c.Customer))
-                    .OrderByDescending(c => c.Customer.Contains("1005000016"))
-                    .ThenBy(c => c.Customer)
+                    .OrderBy(c => c.Customer)
                     .ToList();
 
                 if (filtered.Count > 0)
