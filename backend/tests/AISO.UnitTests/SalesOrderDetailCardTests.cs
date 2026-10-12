@@ -318,20 +318,32 @@ public class SalesOrderDetailCardTests
             approval: approval);
         var json = JsonConvert.SerializeObject(attachment.Content);
 
-        Assert.Contains("Approval journey", json);
-        Assert.Contains("Release requested", json);
-        Assert.Contains("DEV-024", json);
-        Assert.Contains("Approved", json);
-        Assert.Contains("DEV-249", json);
+        Assert.DoesNotContain("Approval journey", json);
+        Assert.DoesNotContain("Owned by", json);
         Assert.Contains("\"Open\"", json);
         Assert.DoesNotContain("\"Open (Released)\"", json);
         Assert.Contains("Approved", json);
         Assert.Contains("Order approved — awaiting delivery", json);
+        Assert.Contains("Approved by DEV-249", json);
         Assert.DoesNotContain("delivery block was cleared", json, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("not that the order is stuck", json, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("\"action\":\"release_so\"", json);
         Assert.DoesNotContain("\"action\":\"delete_so\"", json);
         Assert.DoesNotContain("\"action\":\"forward_so\"", json);
+    }
+
+    [Fact]
+    public void BuildCompactActionResultCard_GeneratesCompactContainerWithTitleAndMessage()
+    {
+        var attachment = TeamsCardBuilder.BuildCompactActionResultCard(
+            "Order approved",
+            "Sales order 0000013811 has been approved and released in SAP.",
+            "good");
+        var json = JsonConvert.SerializeObject(attachment.Content);
+
+        Assert.Contains("Order approved", json);
+        Assert.Contains("Sales order 0000013811 has been approved and released in SAP.", json);
+        Assert.Contains("\"style\":\"good\"", json);
     }
 
     [Fact]
