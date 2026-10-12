@@ -101,4 +101,62 @@ public class FormatSapErrorMessageTests
         Assert.Equal("", TeamsBot.FormatSapErrorMessage(""));
         Assert.Equal("   ", TeamsBot.FormatSapErrorMessage("   "));
     }
+
+    [Fact]
+    public void FormatSapErrorMessage_WhenMultipleSimulateErrors_ShowsAllFaultyMaterials()
+    {
+        var rawMsg = "Chưa có giá PR00 cho item (item:material):10 :260 , 20 :93Sales area TV01/T1, VNDMaterial 260 is not defined for sales\nMaterial 93 is not defined for sales";
+        var lineItems = new List<CreateSalesOrderItemDto>
+        {
+            new() { Material = "260", OrderQty = 1, Plant = "TV01", Unit = "EA" },
+            new() { Material = "93", OrderQty = 2, Plant = "TV01", Unit = "EA" },
+            new() { Material = "100", OrderQty = 3, Plant = "TV01", Unit = "EA" }
+        };
+
+        var result = TeamsBot.FormatSapErrorMessage(rawMsg, lineItems, "TV01", "T1", "SAP_ERROR");
+
+        Assert.Contains("[SAP_ERROR] Item validation error", result);
+        Assert.Contains("Material 260 is not defined for sales", result);
+        Assert.Contains("Material 93 is not defined for sales", result);
+        Assert.DoesNotContain("Material 100", result);
+        Assert.Contains("Sales area TV01/T1", result);
+    }
+
+    [Fact]
+    public void ParseSapErrorMessage_WhenODataReturnsMultipleDetails_CollectsAllDistinctDetails()
+    {
+        var errorJson = @"{
+            ""error"": {
+                ""code"": ""SY/530"",
+                ""message"": ""Item validation error"",
+                ""innererror"": {
+                    ""errordetails"": [
+                        { ""message"": ""Material 260 is not defined for sales org TV01"" },
+                        { ""message"": ""Material 93 has no valid price in plant TV01"" }
+                    ]
+                }
+            }
+        }";
+
+        var result = SapClient.ParseSapErrorMessage(errorJson, 400);
+
+        Assert.Contains("Material 260 is not defined for sales org TV01", result);
+        Assert.Contains("Material 93 has no valid price in plant TV01", result);
+        Assert.DoesNotContain("Item validation error", result);
+    }
+
+    [Fact]
+    public void ParseSapErrorMessage_WhenGenericEnvelopeOnly_FallsBackGracefully()
+    {
+        var errorJson = @"{
+            ""error"": {
+                ""code"": ""BAD_REQUEST"",
+                ""message"": ""Item validation error""
+            }
+        }";
+
+        var result = SapClient.ParseSapErrorMessage(errorJson, 400);
+
+        Assert.Equal("Item validation error", result);
+    }
 }

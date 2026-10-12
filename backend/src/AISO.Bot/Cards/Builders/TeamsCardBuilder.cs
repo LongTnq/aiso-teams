@@ -1058,20 +1058,24 @@ internal static class TeamsCardBuilder
             approvalHint = hint,
             hasItems = items.Count > 0 ? "true" : "false",
             showInvalidMaterial = order.HasInvalidMaterial ? "true" : "false",
-            showOwnedBy = hasOwner ? "true" : "false",
+            showOwnedBy = (hasOwner && !(showActivePending && isApprover)) ? "true" : "false",
             ownedBySapUser = hasOwner ? owner! : string.Empty,
             ownedByMessage = !hasOwner
                 ? string.Empty
                 : isOwner
                     ? "You currently own this order."
-                    : "You can view this order, but Request release / Reject / Forward are limited to the owner.",
+                    : isApprover
+                        ? $"Managed by {owner}."
+                        : "You can view this order, but Request release / Reject / Forward are limited to the owner.",
             showPendingEmployee = showActivePending && isEmployee ? "true" : "false",
             pendingEmployeeMessage = showActivePending && isEmployee
                 ? $"Release requested by {pendingBy}. Waiting for a manager to approve — you can't change this order until then."
                 : string.Empty,
             showPendingManager = showActivePending && isApprover ? "true" : "false",
             pendingManagerSubmittedBy = showActivePending && isApprover
-                ? $"Submitted by {pendingBy}."
+                ? (approval != null
+                    ? $"Submitted by {pendingBy} · {approval.RequestedAt:dd MMM yyyy, HH:mm 'UTC'}."
+                    : $"Submitted by {pendingBy}.")
                 : string.Empty,
             pendingManagerNote = showActivePending && isApprover
                 ? $"Note for manager: {noteText}"
@@ -1079,7 +1083,7 @@ internal static class TeamsCardBuilder
             showReleasedBanner = showReleasedUx ? "true" : "false",
             releasedBannerTitle = showReleasedUx ? "Order approved — awaiting delivery" : string.Empty,
             releasedBannerMessage = string.Empty,
-            showApprovalJourney = showJourney,
+            showApprovalJourney = (showActivePending && isApprover) ? "false" : showJourney,
             journeySteps = journey.Select(s => new { title = s.Title, detail = s.Detail }).ToList(),
             showRequestRelease = isEmployee && canMutateWhilePending ? "true" : "false",
             showApprove = isApprover && canMutateLifecycle && showActivePending && materialOk ? "true" : "false",

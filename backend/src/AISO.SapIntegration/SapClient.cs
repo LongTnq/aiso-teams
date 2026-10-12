@@ -794,7 +794,7 @@ public class SapClient : ISapClient
         return null;
     }
 
-    private static string ParseSapErrorMessage(string errorBody, int statusCode)
+    internal static string ParseSapErrorMessage(string errorBody, int statusCode)
     {
         try
         {
@@ -812,9 +812,7 @@ public class SapClient : ISapClient
                 ? c.GetString()
                 : null;
 
-            // Prefer the most specific (longest) business message from details,
-            // but filter out single-char placeholders like "M" (SAP message class).
-            var message = candidates
+            var rawMessage = candidates
                 .Where(m => !string.IsNullOrWhiteSpace(m) && m.Length > 1)
                 .OrderByDescending(m => m.Length)
                 .FirstOrDefault();
@@ -824,11 +822,17 @@ public class SapClient : ISapClient
                 return $"SAP encountered an internal error (ABAP Short Dump). " +
                        $"This is typically caused by a transaction control violation in the RAP handler. " +
                        $"Please contact the SAP team to check transaction ST22 for details. " +
-                       (!string.IsNullOrWhiteSpace(message) ? $"SAP message: {message}" : string.Empty);
+                       (!string.IsNullOrWhiteSpace(rawMessage) ? $"SAP message: {rawMessage}" : string.Empty);
             }
 
-            if (!string.IsNullOrWhiteSpace(message))
-                return message!;
+            var meaningfulMessages = FilterAndCollectMeaningfulMessages(candidates);
+            if (meaningfulMessages.Count > 0)
+            {
+                return string.Join("\n", meaningfulMessages);
+            }
+
+            if (!string.IsNullOrWhiteSpace(rawMessage))
+                return rawMessage!;
 
             return BuildFallbackMessage(code, statusCode);
         }
@@ -838,6 +842,61 @@ public class SapClient : ISapClient
         }
 
         return BuildFallbackMessage(null, statusCode);
+    }
+
+    private static List<string> FilterAndCollectMeaningfulMessages(List<string> candidates)
+    {
+        var cleaned = new List<string>();
+
+        var genericPhrases = new[]
+        {
+            "exception raised",
+            "an exception was raised",
+            "an error occurred",
+            "item validation error",
+            "validation failed",
+            "the request is invalid",
+            "rfc call failed",
+            "error while processing request",
+            "in the context of data services an unknown internal server error occurred"
+        };
+
+        foreach (var raw in candidates)
+        {
+            if (string.IsNullOrWhiteSpace(raw))
+                continue;
+
+            var msg = raw.Trim();
+            if (msg.Length <= 1)
+                continue;
+
+            var isGeneric = genericPhrases.Any(g => msg.Equals(g, StringComparison.OrdinalIgnoreCase));
+            if (!isGeneric && !cleaned.Any(existing => existing.Equals(msg, StringComparison.OrdinalIgnoreCase)))
+            {
+                cleaned.Add(msg);
+            }
+        }
+
+        if (cleaned.Count == 0)
+        {
+            cleaned = candidates
+                .Where(m => !string.IsNullOrWhiteSpace(m) && m.Trim().Length > 1)
+                .Select(m => m.Trim())
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+        }
+
+        var finalMessages = new List<string>();
+        foreach (var msg in cleaned)
+        {
+            var isSubstring = cleaned.Any(other => other.Length > msg.Length && other.Contains(msg, StringComparison.OrdinalIgnoreCase));
+            if (!isSubstring && !finalMessages.Contains(msg, StringComparer.OrdinalIgnoreCase))
+            {
+                finalMessages.Add(msg);
+            }
+        }
+
+        return finalMessages.Count > 0 ? finalMessages : cleaned;
     }
 
     /// <summary>

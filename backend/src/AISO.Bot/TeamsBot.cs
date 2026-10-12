@@ -4257,7 +4257,7 @@ public class TeamsBot : TeamsActivityHandler
             if (idx >= 0)
             {
                 var rawSuffix = msg.Substring(idx).Trim();
-                var saMatch = Regex.Match(rawSuffix, @"^Sales area\s+([^\s,]+)(?:,\s*([A-Za-z]{3}))?\s*(.*)$", RegexOptions.IgnoreCase);
+                var saMatch = Regex.Match(rawSuffix, @"^Sales area\s+([^\s,]+)(?:,\s*([A-Za-z]{3}))?\s*(.*)$", RegexOptions.IgnoreCase | RegexOptions.Singleline);
                 if (saMatch.Success)
                 {
                     salesAreaText = $"Sales area {saMatch.Groups[1].Value.Trim()}";
