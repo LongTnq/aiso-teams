@@ -3107,6 +3107,22 @@ public class TeamsBot : TeamsActivityHandler
 
             var role = await _userMappingService.GetRoleAsync(teamsUserId, cancellationToken);
 
+            if (IsQuickCreateIntent(normalizedMessage))
+            {
+                if (await TryHandleQuickCreateOrderAsync(
+                    normalizedMessage,
+                    sapUsername,
+                    role,
+                    teamsUserId,
+                    conversationId,
+                    turnContext,
+                    loadingActivityId,
+                    cancellationToken))
+                {
+                    return;
+                }
+            }
+
             var stopwatch = Stopwatch.StartNew();
             var dispatch = await _dispatcher.DispatchAsync(userMessage, sapUsername, role, cancellationToken);
             stopwatch.Stop();
@@ -4114,6 +4130,204 @@ public class TeamsBot : TeamsActivityHandler
                 cancellationToken)),
             cancellationToken);
         return true;
+    }
+
+    internal static bool IsQuickCreateIntent(string message)
+    {
+        if (string.IsNullOrWhiteSpace(message)) return false;
+        var lowered = message.Trim().ToLowerInvariant();
+        return lowered.StartsWith("quick-create")
+            || lowered.StartsWith("quick create")
+            || lowered.StartsWith("/quick-create")
+            || lowered.StartsWith("tạo nhanh")
+            || lowered.StartsWith("tao nhanh")
+            || lowered.StartsWith("tạo đơn nhanh")
+            || lowered.StartsWith("tao don nhanh")
+            || lowered.StartsWith("tạo trực tiếp")
+            || lowered.StartsWith("tao truc tiep")
+            || lowered.StartsWith("tạo luôn")
+            || lowered.StartsWith("tao luon")
+            || lowered.StartsWith("tạo đơn:")
+            || lowered.StartsWith("tao don:")
+            || lowered.Contains("tạo đơn demo")
+            || lowered.Contains("tao don demo")
+            || lowered.Contains("demo tạo đơn")
+            || lowered.Contains("demo tao don")
+            || lowered.Contains("demo create order")
+            || ((lowered.Contains("không cần") || lowered.Contains("khong can") || lowered.Contains("bỏ qua") || lowered.Contains("bo qua"))
+                && (lowered.Contains("thẻ") || lowered.Contains("the") || lowered.Contains("card"))
+                && (lowered.Contains("tạo đơn") || lowered.Contains("tao don") || lowered.Contains("create order")));
+    }
+
+    internal static (string customerId, string material, decimal qty) ParseQuickCreateParams(string message)
+    {
+        var custMatch = System.Text.RegularExpressions.Regex.Match(
+            message,
+            @"(?:khách(?:\s+hàng)?|cho khách|customer|khach)\s*[:=]?\s*([a-zA-Z0-9_]+)|\b(100\d{7})\b",
+            System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+
+        var matMatch = System.Text.RegularExpressions.Regex.Match(
+            message,
+            @"(?:vật liệu|vat lieu|material|sp|mặt hàng|mat|sản phẩm|item)\s*[:=]?\s*([A-Za-z0-9\-]+)|\b(JSH[0-9A-Za-z\-]+)\b|\b(TG\d+)\b",
+            System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+
+        var qtyMatch = System.Text.RegularExpressions.Regex.Match(
+            message,
+            @"(?:số lượng|so luong|qty|quantity|sl)\s*[:=]?\s*(\d+)|\b(\d+)\s*(?:cái|cai|ea|chiếc|chiec|pc|pcs)\b",
+            System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+
+        var customerId = custMatch.Success
+            ? (custMatch.Groups[1].Success ? custMatch.Groups[1].Value : custMatch.Groups[2].Value).Trim()
+            : "1005000016";
+
+        var material = matMatch.Success
+            ? (matMatch.Groups[1].Success ? matMatch.Groups[1].Value
+                : matMatch.Groups[2].Success ? matMatch.Groups[2].Value
+                : matMatch.Groups[3].Value).Trim().ToUpperInvariant()
+            : "JSH00819-214-A0";
+
+        var qty = 1m;
+        if (qtyMatch.Success)
+        {
+            var raw = qtyMatch.Groups[1].Success ? qtyMatch.Groups[1].Value : qtyMatch.Groups[2].Value;
+            if (decimal.TryParse(raw, out var parsedQty) && parsedQty > 0)
+            {
+                qty = parsedQty;
+            }
+        }
+
+        return (customerId, material, qty);
+    }
+
+    private async Task<bool> TryHandleQuickCreateOrderAsync(
+        string message,
+        string sapUsername,
+        UserRole role,
+        string teamsUserId,
+        string? conversationId,
+        ITurnContext turnContext,
+        string? loadingActivityId,
+        CancellationToken cancellationToken)
+    {
+        var (customerId, material, qty) = ParseQuickCreateParams(message);
+
+        var salesOrg = await _scopeLookup.GetSalesOrgBySapUserAsync(sapUsername, cancellationToken);
+        if (string.IsNullOrWhiteSpace(salesOrg))
+        {
+            salesOrg = "TV01";
+        }
+
+        var distChannel = "10";
+        var division = "10";
+        var plant = "1010";
+        var unit = "EA";
+
+        try
+        {
+            var validPlants = await _sap.GetValidMaterialPlantsAsync(cancellationToken);
+            var matchedPlant = validPlants.FirstOrDefault(p =>
+                string.Equals(p.Material, material, StringComparison.OrdinalIgnoreCase));
+
+            if (matchedPlant != null)
+            {
+                if (!string.IsNullOrWhiteSpace(matchedPlant.Plant))
+                    plant = matchedPlant.Plant;
+                if (!string.IsNullOrWhiteSpace(matchedPlant.BaseUnit))
+                    unit = matchedPlant.BaseUnit;
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to resolve plant/unit for {Material}. Using fallback {Plant}/{Unit}", material, plant, unit);
+        }
+
+        var lineItemDto = new CreateSalesOrderItemDto
+        {
+            Material = material,
+            OrderQty = qty,
+            Plant = plant,
+            Unit = unit
+        };
+
+        var payload = new CreateSalesOrderDto
+        {
+            DocType = "OR",
+            SalesOrg = salesOrg,
+            DistChannel = distChannel,
+            Division = division,
+            Customer = customerId,
+            Currency = "VND",
+            RequestingSapUser = sapUsername,
+            Items = new[] { lineItemDto }
+        };
+
+        var stopwatch = Stopwatch.StartNew();
+        try
+        {
+            var created = await _sap.CreateSalesOrderAsync(payload, cancellationToken);
+            stopwatch.Stop();
+
+            await _audit.LogAsync(new AuditEntry
+            {
+                TeamsUserId = teamsUserId,
+                ConversationId = conversationId,
+                Action = "QuickCreateOrder",
+                ParametersJson = JsonConvert.SerializeObject(new
+                {
+                    order_id = created.SoNumber,
+                    customer = customerId,
+                    sales_org = salesOrg,
+                    items = new[] { new { material, qty, plant, unit } }
+                }),
+                ResultStatus = "Success",
+                DurationMs = (int)stopwatch.ElapsedMilliseconds
+            }, cancellationToken);
+
+            var detailAttachment = await BuildSalesOrderDetailAttachmentAsync(
+                created,
+                role,
+                sapUsername,
+                cancellationToken,
+                isNewlyCreated: true);
+
+            await ReplaceLoadingActivityAsync(turnContext, loadingActivityId, detailAttachment, cancellationToken);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            stopwatch.Stop();
+            var sapEx = ex as SapODataException;
+            var isValidation = sapEx?.IsValidationError == true;
+            var errorCode = isValidation ? "VALIDATION" : sapEx != null ? "SAP_ERROR" : "ACTION_FAILED";
+            var errMsg = sapEx != null
+                ? FormatSapErrorMessage(
+                    sapEx.Message,
+                    new[] { lineItemDto },
+                    salesOrg,
+                    distChannel,
+                    errorCode)
+                : $"[{errorCode}] {ex.Message}";
+
+            _logger.LogError(ex, "Quick create sales order failed (classified={ErrorCode})", errorCode);
+
+            await _audit.LogAsync(new AuditEntry
+            {
+                TeamsUserId = teamsUserId,
+                ConversationId = conversationId,
+                Action = "QuickCreateOrder",
+                ParametersJson = JsonConvert.SerializeObject(new { customer = customerId, material, qty }),
+                ResultStatus = "Failed",
+                DurationMs = (int)stopwatch.ElapsedMilliseconds,
+                ErrorMessage = errMsg
+            }, cancellationToken);
+
+            await ReplaceLoadingActivityAsync(
+                turnContext,
+                loadingActivityId,
+                TeamsCardBuilder.BuildErrorCard(errorCode, errMsg),
+                cancellationToken);
+            return true;
+        }
     }
 
     private async Task<Attachment> BuildSalesOrderDetailAttachmentAsync(
