@@ -38,6 +38,18 @@ public class ProactiveMessagingService
         return await SendMessageByTeamsUserAsync(teamsUserId, message, cancellationToken);
     }
 
+    public async Task<bool> SendCardBySapUserAsync(string sapUserId, Attachment cardAttachment, CancellationToken cancellationToken = default)
+    {
+        var teamsUserId = await _userMappingService.GetTeamsUserIdBySapUserAsync(sapUserId, cancellationToken);
+        if (string.IsNullOrEmpty(teamsUserId))
+        {
+            _logger.LogWarning("No Teams user mapped for SAP user {SapUserId}", sapUserId);
+            return false;
+        }
+
+        return await SendCardByTeamsUserAsync(teamsUserId, cardAttachment, cancellationToken);
+    }
+
     public async Task<bool> SendMessageByTeamsUserAsync(string teamsUserId, string message, CancellationToken cancellationToken = default)
     {
         return await SendActivityByTeamsUserAsync(teamsUserId, MessageFactory.Text(message), cancellationToken);

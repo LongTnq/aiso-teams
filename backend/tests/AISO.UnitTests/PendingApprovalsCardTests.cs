@@ -125,6 +125,50 @@ public class PendingApprovalsCardTests
         Assert.Contains("reject_approval", json);
     }
 
+    [Fact]
+    public void BuildOrderApprovedNotificationCard_RendersDetailsAndActionButtons()
+    {
+        var approvedAt = new DateTimeOffset(2026, 10, 12, 17, 58, 0, TimeSpan.Zero);
+        var attachment = TeamsCardBuilder.BuildOrderApprovedNotificationCard(
+            salesOrderNumber: "0000013798",
+            approvedBy: "DEV-230",
+            salesOrg: "TV01",
+            formattedNetValue: "212,500 VND",
+            comment: "Approved by manager",
+            approvedAt: approvedAt);
+
+        var json = JsonConvert.SerializeObject(attachment.Content);
+        Assert.Contains("Sales order approved & released", json);
+        Assert.Contains("0000013798", json);
+        Assert.Contains("DEV-230", json);
+        Assert.Contains("TV01", json);
+        Assert.Contains("212,500 VND", json);
+        Assert.Contains("Approved by manager", json);
+        Assert.Contains("view_details", json);
+    }
+
+    [Fact]
+    public void BuildOrderRejectedNotificationCard_RendersDetailsAndActionButtons()
+    {
+        var declinedAt = new DateTimeOffset(2026, 10, 12, 18, 0, 0, TimeSpan.Zero);
+        var attachment = TeamsCardBuilder.BuildOrderRejectedNotificationCard(
+            salesOrderNumber: "0000013798",
+            declinedBy: "DEV-230",
+            salesOrg: "TV01",
+            formattedNetValue: "212,500 VND",
+            comment: "Budget exceeded",
+            declinedAt: declinedAt);
+
+        var json = JsonConvert.SerializeObject(attachment.Content);
+        Assert.Contains("Release request declined", json);
+        Assert.Contains("0000013798", json);
+        Assert.Contains("DEV-230", json);
+        Assert.Contains("TV01", json);
+        Assert.Contains("212,500 VND", json);
+        Assert.Contains("Budget exceeded", json);
+        Assert.Contains("view_details", json);
+    }
+
     private static OrderApprovalRequest Approval(
         string soNumber,
         string requestedBy,

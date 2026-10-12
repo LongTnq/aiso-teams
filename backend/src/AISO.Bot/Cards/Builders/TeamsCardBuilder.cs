@@ -743,6 +743,44 @@ internal static class TeamsCardBuilder
                 requestedAt = requestedAt.ToString("dd MMM yyyy, HH:mm 'UTC'")
             });
 
+    public static Attachment BuildOrderApprovedNotificationCard(
+        string salesOrderNumber,
+        string approvedBy,
+        string salesOrg,
+        string formattedNetValue,
+        string? comment,
+        DateTimeOffset approvedAt) =>
+        CardTemplateFileLoader.BuildAdaptiveCardAttachment(
+            "order-approved-notification.json",
+            new
+            {
+                salesOrderNumber,
+                approvedBy,
+                salesOrg = string.IsNullOrWhiteSpace(salesOrg) ? "—" : salesOrg,
+                formattedNetValue = string.IsNullOrWhiteSpace(formattedNetValue) ? "—" : formattedNetValue,
+                comment = comment ?? string.Empty,
+                approvedAt = approvedAt.ToString("dd MMM yyyy, HH:mm 'UTC'")
+            });
+
+    public static Attachment BuildOrderRejectedNotificationCard(
+        string salesOrderNumber,
+        string declinedBy,
+        string salesOrg,
+        string formattedNetValue,
+        string? comment,
+        DateTimeOffset declinedAt) =>
+        CardTemplateFileLoader.BuildAdaptiveCardAttachment(
+            "order-rejected-notification.json",
+            new
+            {
+                salesOrderNumber,
+                declinedBy,
+                salesOrg = string.IsNullOrWhiteSpace(salesOrg) ? "—" : salesOrg,
+                formattedNetValue = string.IsNullOrWhiteSpace(formattedNetValue) ? "—" : formattedNetValue,
+                comment = string.IsNullOrWhiteSpace(comment) ? "No reason provided" : comment.Trim(),
+                declinedAt = declinedAt.ToString("dd MMM yyyy, HH:mm 'UTC'")
+            });
+
     public static Attachment BuildListDelegationsCard(IReadOnlyList<DelegationItem> delegations) =>
         CardTemplateFileLoader.BuildAdaptiveCardAttachment("list-delegations.json", new { delegations });
 
